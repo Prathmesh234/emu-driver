@@ -1,20 +1,20 @@
 #!/bin/bash
 #
-# cua-driver local/debug installer. Builds from the current source tree
-# and installs the resulting CuaDriver.app + cua-driver CLI onto the
+# emu-cua-driver local/debug installer. Builds from the current source tree
+# and installs the resulting EmuCuaDriver.app + emu-cua-driver CLI onto the
 # developer's machine. Mirrors lume's scripts/install-local.sh shape.
 #
 # Installs to the same paths as scripts/install.sh (the production
 # installer), so TCC grants made against one install survive the other:
-#   app bundle  → /Applications/CuaDriver.app
-#   CLI symlink → ~/.local/bin/cua-driver
+#   app bundle  → /Applications/EmuCuaDriver.app
+#   CLI symlink → ~/.local/bin/emu-cua-driver
 #
 # The script prompts for sudo only on the specific steps that need it
 # (moving the .app into /Applications)
 # — do NOT run the whole script with `sudo`.
 #
 # --release builds the release configuration (default is debug — faster).
-# --daemon installs a LaunchAgent that runs `cua-driver serve` on login.
+# --daemon installs a LaunchAgent that runs `emu-cua-driver serve` on login.
 #
 # Not for end-users (use scripts/install.sh for that — fetches signed +
 # notarized release from GitHub).
@@ -45,7 +45,7 @@ fi
 # --- Parse arguments ----------------------------------------------------
 
 BUILD_CONFIG="debug"
-INSTALL_DAEMON=false     # LaunchAgent for `cua-driver serve`
+INSTALL_DAEMON=false     # LaunchAgent for `emu-cua-driver serve`
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -56,12 +56,12 @@ while [ "$#" -gt 0 ]; do
             INSTALL_DAEMON=true
             ;;
         --help|-h)
-            echo "${BOLD}${BLUE}cua-driver local installer${NORMAL}"
+            echo "${BOLD}${BLUE}emu-cua-driver local installer${NORMAL}"
             echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --release    Build the release configuration (default: debug)."
-            echo "  --daemon     Also install a LaunchAgent that runs 'cua-driver serve'"
+            echo "  --daemon     Also install a LaunchAgent that runs 'emu-cua-driver serve'"
             echo "               on login, so the per-pid AX cache is always available."
             echo "  --help       Show this help."
             echo ""
@@ -82,8 +82,8 @@ done
 
 APP_INSTALL_DIR="/Applications"
 BIN_INSTALL_DIR="$HOME/.local/bin"
-APP_DEST="$APP_INSTALL_DIR/CuaDriver.app"
-BIN_LINK="$BIN_INSTALL_DIR/cua-driver"
+APP_DEST="$APP_INSTALL_DIR/EmuCuaDriver.app"
+BIN_LINK="$BIN_INSTALL_DIR/emu-cua-driver"
 
 # Conditional sudo — matches install.sh. /Applications is usually
 # group-writable by the admin group, so most users won't be prompted.
@@ -92,13 +92,13 @@ if [ ! -w "$APP_INSTALL_DIR" ]; then
     SUDO_APP="sudo"
 fi
 
-echo "${BOLD}${BLUE}cua-driver local installer${NORMAL}"
+echo "${BOLD}${BLUE}emu-cua-driver local installer${NORMAL}"
 echo "Source:    ${BOLD}$CUA_DRIVER_DIR${NORMAL}"
 echo "Config:    ${BOLD}$BUILD_CONFIG${NORMAL}"
 echo "App path:  ${BOLD}$APP_DEST${NORMAL}"
 echo "CLI path:  ${BOLD}$BIN_LINK${NORMAL}"
 if [ "$INSTALL_DAEMON" = true ]; then
-    echo "Daemon:    ${BOLD}LaunchAgent (cua-driver serve)${NORMAL}"
+    echo "Daemon:    ${BOLD}LaunchAgent (emu-cua-driver serve)${NORMAL}"
 fi
 echo ""
 
@@ -112,12 +112,12 @@ fi
 
 # --- Build --------------------------------------------------------------
 
-echo "${BOLD}Building cua-driver ($BUILD_CONFIG)...${NORMAL}"
+echo "${BOLD}Building emu-cua-driver ($BUILD_CONFIG)...${NORMAL}"
 cd "$CUA_DRIVER_DIR"
 "$CUA_DRIVER_DIR/scripts/build-app.sh" "$BUILD_CONFIG"
 echo ""
 
-BUILD_APP="$CUA_DRIVER_DIR/.build/CuaDriver.app"
+BUILD_APP="$CUA_DRIVER_DIR/.build/EmuCuaDriver.app"
 if [ ! -d "$BUILD_APP" ]; then
     echo "${RED}Error: build-app.sh did not produce $BUILD_APP${NORMAL}"
     exit 1
@@ -129,7 +129,7 @@ fi
 # removed) installed to `~/Applications/CuaDriver.app`. That leaks a
 # second bundle that LaunchServices keys off
 # `CFBundleIdentifier=com.trycua.driver`, which can silently re-route
-# `cua-driver serve` to the stale `~/Applications` copy.
+# upstream `cua-driver serve` to the stale `~/Applications` copy.
 # Proactively remove them here so there is exactly one registered
 # CuaDriver.app on the machine after every install.
 STALE_APP="$HOME/Applications/CuaDriver.app"
@@ -142,7 +142,7 @@ done
 
 # --- Install .app bundle ------------------------------------------------
 
-echo "${BOLD}Installing CuaDriver.app to $APP_INSTALL_DIR...${NORMAL}"
+echo "${BOLD}Installing EmuCuaDriver.app to $APP_INSTALL_DIR...${NORMAL}"
 $SUDO_APP mkdir -p "$APP_INSTALL_DIR"
 if [ -e "$APP_DEST" ]; then
     $SUDO_APP rm -rf "$APP_DEST"
@@ -155,22 +155,22 @@ echo "${GREEN}Installed $APP_DEST${NORMAL}"
 # --- Install CLI symlink ------------------------------------------------
 
 echo ""
-echo "${BOLD}Linking cua-driver CLI into $BIN_INSTALL_DIR...${NORMAL}"
+echo "${BOLD}Linking emu-cua-driver CLI into $BIN_INSTALL_DIR...${NORMAL}"
 mkdir -p "$BIN_INSTALL_DIR"
 if [ ! -w "$BIN_INSTALL_DIR" ]; then
     echo "${RED}Error: $BIN_INSTALL_DIR is not writable.${NORMAL}"
     echo "Pick a user-writable bin directory or fix ownership before rerunning."
     exit 1
 fi
-ln -sf "$APP_DEST/Contents/MacOS/cua-driver" "$BIN_LINK"
-echo "${GREEN}Linked $BIN_LINK → $APP_DEST/Contents/MacOS/cua-driver${NORMAL}"
+ln -sf "$APP_DEST/Contents/MacOS/emu-cua-driver" "$BIN_LINK"
+echo "${GREEN}Linked $BIN_LINK → $APP_DEST/Contents/MacOS/emu-cua-driver${NORMAL}"
 
 # --- Daemon (optional) --------------------------------------------------
 
 if [ "$INSTALL_DAEMON" = true ]; then
     echo ""
-    echo "${BOLD}Installing LaunchAgent (cua-driver serve)...${NORMAL}"
-    SERVICE_NAME="com.trycua.cua_driver_daemon"
+    echo "${BOLD}Installing LaunchAgent (emu-cua-driver serve)...${NORMAL}"
+    SERVICE_NAME="com.emu.cua_driver_daemon"
     PLIST_PATH="$HOME/Library/LaunchAgents/$SERVICE_NAME.plist"
 
     mkdir -p "$HOME/Library/LaunchAgents"
@@ -195,9 +195,9 @@ if [ "$INSTALL_DAEMON" = true ]; then
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/cua_driver_daemon.log</string>
+    <string>/tmp/emu_cua_driver_daemon.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/cua_driver_daemon.error.log</string>
+    <string>/tmp/emu_cua_driver_daemon.error.log</string>
     <key>ProcessType</key>
     <string>Interactive</string>
 </dict>
@@ -206,11 +206,11 @@ EOF
     chmod 644 "$PLIST_PATH"
     launchctl load "$PLIST_PATH"
     echo "${GREEN}LaunchAgent loaded: $PLIST_PATH${NORMAL}"
-    echo "Logs: /tmp/cua_driver_daemon.log + /tmp/cua_driver_daemon.error.log"
+    echo "Logs: /tmp/emu_cua_driver_daemon.log + /tmp/emu_cua_driver_daemon.error.log"
 else
     # Tear down any stale LaunchAgent from a prior run so two daemons
     # don't race on the default socket.
-    SERVICE_NAME="com.trycua.cua_driver_daemon"
+    SERVICE_NAME="com.emu.cua_driver_daemon"
     PLIST_PATH="$HOME/Library/LaunchAgents/$SERVICE_NAME.plist"
     if [ -f "$PLIST_PATH" ]; then
         echo ""
@@ -224,7 +224,7 @@ fi
 
 cat <<EOF
 
-${GREEN}${BOLD}cua-driver ($BUILD_CONFIG) installed.${NORMAL}
+${GREEN}${BOLD}emu-cua-driver ($BUILD_CONFIG) installed.${NORMAL}
 
 Next steps:
   1. First run: open $APP_DEST to grant TCC permissions via the

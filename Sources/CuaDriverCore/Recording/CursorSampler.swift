@@ -38,7 +38,7 @@ public actor CursorSampler {
     private var sampleCount: Int = 0
 
     private let log = Logger(
-        subsystem: "com.trycua.driver",
+        subsystem: "com.emu.cuadriver",
         category: "CursorSampler"
     )
 

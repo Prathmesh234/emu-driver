@@ -18,7 +18,7 @@ Two assertions are verified:
    overlay AFTER the click.
 
 Run:
-    CUA_DRIVER_BINARY=.build/CuaDriver.app/Contents/MacOS/cua-driver \\
+    CUA_DRIVER_BINARY=.build/EmuCuaDriver.app/Contents/MacOS/emu-cua-driver \\
       python3 -m unittest test_overlay_z_order -v
 """
 

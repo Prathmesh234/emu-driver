@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 
 scripts/build-app.sh >/dev/null
 
-export CUA_DRIVER_BINARY="$(pwd)/.build/CuaDriver.app/Contents/MacOS/cua-driver"
+export CUA_DRIVER_BINARY="$(pwd)/.build/EmuCuaDriver.app/Contents/MacOS/emu-cua-driver"
 
 cd Tests/integration
 

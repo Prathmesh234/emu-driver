@@ -2,7 +2,7 @@ import Foundation
 import os
 
 /// Owns the on-disk JSON config file at
-/// `~/Library/Application Support/<CFBundleName ?? "Cua Driver">/config.json`.
+/// `~/Library/Application Support/<CFBundleName ?? "EmuCuaDriver">/config.json`.
 ///
 /// Actor-isolated so concurrent `mutate` calls serialize through a single
 /// load-modify-save cycle. Reads are tolerant: missing file, unreadable
@@ -17,7 +17,7 @@ public actor ConfigStore {
     public static let shared = ConfigStore()
 
     private let log = Logger(
-        subsystem: "com.trycua.driver",
+        subsystem: "com.emu.cuadriver",
         category: "ConfigStore"
     )
 
@@ -60,10 +60,10 @@ public actor ConfigStore {
     }
 
     /// Resolve the Application Support subdirectory name. Prefers
-    /// `CFBundleName` from the running bundle (so `CuaDriver.app` with
-    /// `CFBundleName=Cua Driver` writes under `Cua Driver/`). Falls back
-    /// to the string literal `"Cua Driver"` when running from the raw
-    /// `.build/debug/cua-driver` executable with no bundle.
+    /// `CFBundleName` from the running bundle (so `EmuCuaDriver.app` with
+    /// `CFBundleName=EmuCuaDriver` writes under `EmuCuaDriver/`). Falls back
+    /// to the string literal `"EmuCuaDriver"` when running from the raw
+    /// `.build/debug/emu-cua-driver` executable with no bundle.
     private static func appDirectoryName() -> String {
         if let name = Bundle.main.object(forInfoDictionaryKey: "CFBundleName")
             as? String,
@@ -71,7 +71,7 @@ public actor ConfigStore {
         {
             return name
         }
-        return "Cua Driver"
+        return "EmuCuaDriver"
     }
 
     /// Load the config from disk. Returns `CuaDriverConfig.default`
@@ -176,7 +176,7 @@ public actor ConfigStore {
 
     /// Synchronous setter for the telemetry flag, no actor hop. Narrow
     /// convenience for ArgumentParser's synchronous `run()` callbacks
-    /// (which can't `await` the actor) — `cua-driver config telemetry
+    /// (which can't `await` the actor) — `emu-cua-driver config telemetry
     /// enable` ends up here. Readers use `loadSync()`; writers serialize
     /// through this same file-level write, so two concurrent CLI
     /// invocations at most lose one update (last-write-wins) — no

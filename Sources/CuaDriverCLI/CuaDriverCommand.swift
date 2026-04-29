@@ -7,8 +7,8 @@ import MCP
 
 struct CuaDriverCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "cua-driver",
-        abstract: "macOS Accessibility-driven computer-use agent — MCP stdio server.",
+        commandName: "emu-cua-driver",
+        abstract: "Emu macOS Accessibility-driven computer-use driver — MCP stdio server.",
         version: CuaDriverCore.version,
         subcommands: [
             MCPCommand.self,
@@ -48,16 +48,16 @@ struct MCPConfigCommand: ParsableCommand {
         case nil, "":
             print(genericMcpServersSnippet(binary: binary, includeType: false))
         case "claude":
-            print("claude mcp add --transport stdio cua-driver -- \(binary) mcp")
+            print("claude mcp add --transport stdio emu-cua-driver -- \(binary) mcp")
         case "codex":
-            print("codex mcp add cua-driver -- \(binary) mcp")
+            print("codex mcp add emu-cua-driver -- \(binary) mcp")
         case "cursor":
             // Cursor has no CLI — emit JSON the user pastes into
             // ~/.cursor/mcp.json (global) or .cursor/mcp.json (project).
             print(genericMcpServersSnippet(binary: binary, includeType: true))
         case "openclaw":
             // OpenClaw has a CLI registry — set with a JSON arg.
-            print("openclaw mcp set cua-driver '{\"command\":\"\(binary)\",\"args\":[\"mcp\"]}'")
+            print("openclaw mcp set emu-cua-driver '{\"command\":\"\(binary)\",\"args\":[\"mcp\"]}'")
         case "opencode":
             // OpenCode (sst/opencode) uses opencode.json with type:"local"
             // and command as a single merged array.
@@ -66,7 +66,7 @@ struct MCPConfigCommand: ParsableCommand {
             {
               "$schema": "https://opencode.ai/config.json",
               "mcp": {
-                "cua-driver": {
+                "emu-cua-driver": {
                   "type": "local",
                   "command": ["\(binary)", "mcp"],
                   "enabled": true
@@ -82,7 +82,7 @@ struct MCPConfigCommand: ParsableCommand {
             # paste under mcp_servers in ~/.hermes/config.yaml,
             # then run /reload-mcp inside Hermes:
             mcp_servers:
-              cua-driver:
+              emu-cua-driver:
                 command: "\(binary)"
                 args: ["mcp"]
             """
@@ -95,7 +95,7 @@ struct MCPConfigCommand: ParsableCommand {
             Pi (badlogic/pi-mono) does not support MCP natively — the author
             has stated MCP support will not be added for context-budget reasons.
 
-            Use cua-driver as a plain CLI from inside Pi instead:
+            Use emu-cua-driver as a plain CLI from inside Pi instead:
 
                 \(binary) list_apps
                 \(binary) click  '{"pid": 1234, "x": 100, "y": 200}'
@@ -121,7 +121,7 @@ struct MCPConfigCommand: ParsableCommand {
         return """
         {
           "mcpServers": {
-            "cua-driver": {
+            "emu-cua-driver": {
               "command": "\(binary)",
               "args": ["mcp"]\(typeLine)
             }
@@ -137,7 +137,7 @@ struct MCPConfigCommand: ParsableCommand {
         if let path = Bundle.main.executablePath {
             return path
         }
-        return CommandLine.arguments.first ?? "cua-driver"
+        return CommandLine.arguments.first ?? "emu-cua-driver"
     }
 }
 
@@ -180,9 +180,8 @@ struct CuaDriverEntryPoint {
         let original = Array(CommandLine.arguments.dropFirst())
 
         // First-run installation ping. Fires at most once per install
-        // (guarded by a marker file under ~/.cua-driver/) and bypasses
-        // the opt-out check so we can count adoption. Every subsequent
-        // event honors the opt-out flag.
+        // (guarded by a marker file under ~/.emu-cua-driver/) and honors
+        // the opt-out flag.
         TelemetryClient.shared.recordInstallation()
 
         // Per-entry-point event. Records which CLI surface (mcp /
@@ -191,7 +190,7 @@ struct CuaDriverEntryPoint {
         TelemetryClient.shared.record(event: entryEvent)
 
         // Bare launch (no args) — typically a double-click from Finder
-        // / Spotlight / Dock on CuaDriver.app. LSUIElement=true keeps
+        // / Spotlight / Dock on EmuCuaDriver.app. LSUIElement=true keeps
         // the binary headless by default, so without this branch a
         // DMG user sees "nothing happens" on open. Route through the
         // permissions gate instead: it's our one visible surface and

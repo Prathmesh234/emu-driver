@@ -135,7 +135,7 @@ def default_binary_path() -> str:
             "..",
             ".build",
             "debug",
-            "cua-driver",
+            "emu-cua-driver",
         ),
     )
 

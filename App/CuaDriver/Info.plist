@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.trycua.driver</string>
+    <string>com.emu.cuadriver</string>
     <key>CFBundleName</key>
-    <string>Cua Driver</string>
+    <string>EmuCuaDriver</string>
     <key>CFBundleDisplayName</key>
-    <string>Cua Driver</string>
+    <string>EmuCuaDriver</string>
     <key>CFBundleExecutable</key>
-    <string>cua-driver</string>
+    <string>emu-cua-driver</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIconName</key>

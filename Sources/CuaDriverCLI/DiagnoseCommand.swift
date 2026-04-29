@@ -6,7 +6,7 @@ import Foundation
 import ScreenCaptureKit
 import Security
 
-/// `cua-driver diagnose` — print the full state needed to debug TCC /
+/// `emu-cua-driver diagnose` — print the full state needed to debug TCC /
 /// install-layout issues in one paste-able block.
 ///
 /// Primary motivating case: a user reports the first-launch permissions
@@ -18,9 +18,9 @@ import Security
 ///   - running-process identity (path, bundle id, pid, cdhash)
 ///   - TCC probe results (Accessibility + Screen Recording, as the live
 ///     process sees them)
-///   - install layout (/Applications/CuaDriver.app bundle + signature,
-///     ~/.local/bin/cua-driver symlink resolution)
-///   - TCC DB rows for `com.trycua.driver` (best-effort; system TCC DB
+///   - install layout (/Applications/EmuCuaDriver.app bundle + signature,
+///     ~/.local/bin/emu-cua-driver symlink resolution)
+///   - TCC DB rows for `com.emu.cuadriver` (best-effort; system TCC DB
 ///     requires Full Disk Access)
 ///   - config + state paths (LaunchAgent plist, user-data dir, config
 ///     dir) with existence booleans
@@ -80,7 +80,7 @@ struct DiagnoseCommand: AsyncParsableCommand {
         var lines: [String] = ["## install layout"]
 
         // App bundle at the canonical /Applications path.
-        let appPath = "/Applications/CuaDriver.app"
+        let appPath = "/Applications/EmuCuaDriver.app"
         let appURL = URL(fileURLWithPath: appPath)
         let appExists = FileManager.default.fileExists(atPath: appPath)
         lines.append("bundle:  \(appPath)   exists=\(appExists)")
@@ -93,8 +93,8 @@ struct DiagnoseCommand: AsyncParsableCommand {
 
         // CLI symlink that an MCP client (Claude Code etc.) invokes.
         let cliPaths = [
-            ("symlink", "\(NSHomeDirectory())/.local/bin/cua-driver"),
-            ("legacy symlink", "/usr/local/bin/cua-driver"),
+            ("symlink", "\(NSHomeDirectory())/.local/bin/emu-cua-driver"),
+            ("legacy symlink", "/usr/local/bin/emu-cua-driver"),
         ]
         for (label, cliPath) in cliPaths {
             let cliExists = FileManager.default.fileExists(atPath: cliPath)
@@ -110,7 +110,7 @@ struct DiagnoseCommand: AsyncParsableCommand {
         // followed an older install-local.sh (pre-path-alignment) see
         // they have leftovers to clean up.
         let stalePaths = [
-            "\(NSHomeDirectory())/Applications/CuaDriver.app",
+            "\(NSHomeDirectory())/Applications/EmuCuaDriver.app",
         ]
         for stale in stalePaths where FileManager.default.fileExists(atPath: stale) {
             lines.append("stale:   \(stale)   ← old install-local.sh path, consider removing")
@@ -120,14 +120,14 @@ struct DiagnoseCommand: AsyncParsableCommand {
     }
 
     private func tccDatabaseSection() -> String {
-        var lines: [String] = ["## tcc database rows for com.trycua.driver"]
+        var lines: [String] = ["## tcc database rows for com.emu.cuadriver"]
 
         let userDB = "\(NSHomeDirectory())/Library/Application Support/com.apple.TCC/TCC.db"
         lines.append("(reading \(userDB) — best-effort; system TCC DB requires FDA)")
         lines.append("")
 
         let sql = "SELECT service, client, client_type, auth_value, auth_reason, "
-            + "hex(csreq) AS csreq_hex FROM access WHERE client='com.trycua.driver';"
+            + "hex(csreq) AS csreq_hex FROM access WHERE client='com.emu.cuadriver';"
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
@@ -164,12 +164,12 @@ struct DiagnoseCommand: AsyncParsableCommand {
     private func configPathsSection() -> String {
         let home = NSHomeDirectory()
         let paths: [(String, String)] = [
-            ("user data dir",     "\(home)/.cua-driver"),
-            ("config dir",        "\(home)/Library/Application Support/Cua Driver"),
-            ("telemetry id",      "\(home)/.cua-driver/.telemetry_id"),
-            ("install marker",    "\(home)/.cua-driver/.installation_recorded"),
-            ("updater plist",     "\(home)/Library/LaunchAgents/com.trycua.cua_driver_updater.plist"),
-            ("daemon plist",      "\(home)/Library/LaunchAgents/com.trycua.cua_driver_daemon.plist"),
+            ("user data dir",     "\(home)/.emu-cua-driver"),
+            ("config dir",        "\(home)/Library/Application Support/EmuCuaDriver"),
+            ("telemetry id",      "\(home)/.emu-cua-driver/.telemetry_id"),
+            ("install marker",    "\(home)/.emu-cua-driver/.installation_recorded"),
+            ("updater plist",     "\(home)/Library/LaunchAgents/com.emu.cua_driver_updater.plist"),
+            ("daemon plist",      "\(home)/Library/LaunchAgents/com.emu.cua_driver_daemon.plist"),
         ]
         var lines: [String] = ["## config + state paths"]
         for (label, path) in paths {

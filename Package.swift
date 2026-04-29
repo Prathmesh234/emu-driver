@@ -7,7 +7,7 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "cua-driver", targets: ["CuaDriverCLI"]),
+        .executable(name: "emu-cua-driver", targets: ["CuaDriverCLI"]),
         .library(name: "CuaDriverCore", targets: ["CuaDriverCore"]),
         .library(name: "CuaDriverServer", targets: ["CuaDriverServer"]),
     ],

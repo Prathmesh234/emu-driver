@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# cua-driver uninstaller. Removes everything install.sh laid down:
+# emu-cua-driver uninstaller. Removes everything install.sh laid down:
 #
-#   - ~/.local/bin/cua-driver symlink
-#   - /Applications/CuaDriver.app bundle
-#   - ~/.cua-driver/ (telemetry id + install marker)
-#   - ~/Library/Application Support/Cua Driver/ (config.json)
+#   - ~/.local/bin/emu-cua-driver symlink
+#   - /Applications/EmuCuaDriver.app bundle
+#   - ~/.emu-cua-driver/ (telemetry id + install marker)
+#   - ~/Library/Application Support/EmuCuaDriver/ (config.json)
 #
 # Does NOT revoke TCC grants (Accessibility + Screen Recording).
 #
@@ -12,11 +12,11 @@
 #   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/uninstall.sh)"
 set -euo pipefail
 
-USER_BIN_LINK="$HOME/.local/bin/cua-driver"
-SYSTEM_BIN_LINK="/usr/local/bin/cua-driver"
-APP_BUNDLE="/Applications/CuaDriver.app"
-USER_DATA="$HOME/.cua-driver"
-CONFIG_DIR="$HOME/Library/Application Support/Cua Driver"
+USER_BIN_LINK="$HOME/.local/bin/emu-cua-driver"
+SYSTEM_BIN_LINK="/usr/local/bin/emu-cua-driver"
+APP_BUNDLE="/Applications/EmuCuaDriver.app"
+USER_DATA="$HOME/.emu-cua-driver"
+CONFIG_DIR="$HOME/Library/Application Support/EmuCuaDriver"
 # Legacy — remove if present from older installs.
 LEGACY_UPDATE_SCRIPT="/usr/local/bin/cua-driver-update"
 LEGACY_UPDATER_PLIST="$HOME/Library/LaunchAgents/com.trycua.cua_driver_updater.plist"
@@ -77,12 +77,12 @@ fi
 # Agent skill symlinks (Claude Code + Codex). Only remove when the link
 # is ours — a dev user pointing the symlink at a working copy of the repo
 # keeps theirs untouched.
-SKILL_TARGET_EXPECTED="$APP_BUNDLE/Contents/Resources/Skills/cua-driver"
+SKILL_TARGET_EXPECTED="$APP_BUNDLE/Contents/Resources/Skills/emu-cua-driver"
 for SKILL_LINK in \
-    "$HOME/.claude/skills/cua-driver" \
-    "$HOME/.agents/skills/cua-driver" \
-    "$HOME/.openclaw/skills/cua-driver" \
-    "$HOME/.config/opencode/skills/cua-driver"; do
+    "$HOME/.claude/skills/emu-cua-driver" \
+    "$HOME/.agents/skills/emu-cua-driver" \
+    "$HOME/.openclaw/skills/emu-cua-driver" \
+    "$HOME/.config/opencode/skills/emu-cua-driver"; do
     if [[ -L "$SKILL_LINK" ]] && [[ "$(readlink "$SKILL_LINK")" == "$SKILL_TARGET_EXPECTED" ]]; then
         rm -f "$SKILL_LINK"
         log "removed $SKILL_LINK"
@@ -93,12 +93,12 @@ done
 
 cat << 'FINALUNMSG'
 
-cua-driver uninstalled.
+emu-cua-driver uninstalled.
 
 TCC grants (Accessibility + Screen Recording) remain in System
 Settings > Privacy & Security. Reset them explicitly if you want a
 clean re-install flow:
 
-  tccutil reset Accessibility com.trycua.driver
-  tccutil reset ScreenCapture com.trycua.driver
+  tccutil reset Accessibility com.emu.cuadriver
+  tccutil reset ScreenCapture com.emu.cuadriver
 FINALUNMSG

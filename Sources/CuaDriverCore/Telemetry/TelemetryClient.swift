@@ -5,8 +5,8 @@ import Foundation
 /// env-override support, and installation-record-once behavior.
 ///
 /// Differences from lume:
-///  - Events are prefixed `cua_driver_` instead of `lume_`.
-///  - Installation ID + marker live under `~/.cua-driver/` instead
+///  - Events are prefixed `emu_cua_driver_` instead of `lume_`.
+///  - Installation ID + marker live under `~/.emu-cua-driver/` instead
 ///    of `~/.lume/`.
 ///  - Env overrides are `CUA_DRIVER_TELEMETRY_ENABLED` and
 ///    `CUA_DRIVER_TELEMETRY_DEBUG`.
@@ -27,7 +27,7 @@ public final class TelemetryClient: @unchecked Sendable {
         static let captureURL = "https://eu.i.posthog.com/capture/"
         static let telemetryIdFileName = ".telemetry_id"
         static let installationRecordedFileName = ".installation_recorded"
-        static let homeSubdirectory = "~/.cua-driver"
+        static let homeSubdirectory = "~/.emu-cua-driver"
         static let envTelemetryEnabled = "CUA_DRIVER_TELEMETRY_ENABLED"
         static let envTelemetryDebug = "CUA_DRIVER_TELEMETRY_DEBUG"
     }
@@ -57,7 +57,7 @@ public final class TelemetryClient: @unchecked Sendable {
     /// becomes a no-op when telemetry is disabled.
     ///
     /// - Parameters:
-    ///   - event: Event name (e.g. `"cua_driver_mcp"`).
+    ///   - event: Event name (e.g. `"emu_cua_driver_mcp"`).
     ///   - properties: Additional event properties merged on top of
     ///     the default envelope (version / OS / arch / etc.).
     public func record(event: String, properties: [String: Any] = [:]) {
@@ -71,11 +71,10 @@ public final class TelemetryClient: @unchecked Sendable {
     /// Record the one-time installation event.
     ///
     /// Sent exactly once per install (guarded by the
-    /// `.installation_recorded` marker file), **bypassing** the
-    /// opt-out check so we can count adoption even when a user
-    /// disables telemetry immediately after install. Every
-    /// subsequent event honors the opt-out normally.
+    /// `.installation_recorded` marker file), only when telemetry is
+    /// explicitly enabled for the Emu fork.
     public func recordInstallation() {
+        guard isEnabledSync() else { return }
         let homeDir = (Constants.homeSubdirectory as NSString).expandingTildeInPath
         let markerPath = "\(homeDir)/\(Constants.installationRecordedFileName)"
         if FileManager.default.fileExists(atPath: markerPath) {
@@ -123,12 +122,12 @@ public final class TelemetryClient: @unchecked Sendable {
         let version = CuaDriverCore.version
 
         var eventProperties = properties
-        eventProperties["cua_driver_version"] = version
+        eventProperties["emu_cua_driver_version"] = version
         eventProperties["os"] = "macos"
         eventProperties["os_version"] = ProcessInfo.processInfo.operatingSystemVersionString
         eventProperties["arch"] = Self.architecture
         eventProperties["is_ci"] = Self.isCI
-        eventProperties["$lib"] = "cua-driver-swift"
+        eventProperties["$lib"] = "emu-cua-driver-swift"
         eventProperties["$lib_version"] = version
 
         let payload: [String: Any] = [
@@ -248,21 +247,21 @@ public final class TelemetryClient: @unchecked Sendable {
 public enum TelemetryEvent {
     /// One-time installation ping. Sent regardless of opt-out (see
     /// `recordInstallation`); all other events respect the flag.
-    public static let install = "cua_driver_install"
+    public static let install = "emu_cua_driver_install"
 
     // CLI entry points
-    public static let mcp = "cua_driver_mcp"
-    public static let serve = "cua_driver_serve"
-    public static let stop = "cua_driver_stop"
-    public static let status = "cua_driver_status"
-    public static let call = "cua_driver_call"
-    public static let listTools = "cua_driver_list_tools"
-    public static let describe = "cua_driver_describe"
-    public static let recording = "cua_driver_recording"
-    public static let config = "cua_driver_config"
-    public static let guiLaunch = "cua_driver_gui_launch"
+    public static let mcp = "emu_cua_driver_mcp"
+    public static let serve = "emu_cua_driver_serve"
+    public static let stop = "emu_cua_driver_stop"
+    public static let status = "emu_cua_driver_status"
+    public static let call = "emu_cua_driver_call"
+    public static let listTools = "emu_cua_driver_list_tools"
+    public static let describe = "emu_cua_driver_describe"
+    public static let recording = "emu_cua_driver_recording"
+    public static let config = "emu_cua_driver_config"
+    public static let guiLaunch = "emu_cua_driver_gui_launch"
 
     /// Prefix for per-MCP-tool events. `apiPrefix + tool_name`
-    /// produces e.g. `cua_driver_api_click`.
-    public static let apiPrefix = "cua_driver_api_"
+    /// produces e.g. `emu_cua_driver_api_click`.
+    public static let apiPrefix = "emu_cua_driver_api_"
 }

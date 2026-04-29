@@ -145,23 +145,23 @@ struct CallCommand: AsyncParsableCommand {
         }
 
         // `check_permissions` in-process is ONLY correct when the process
-        // is running from CuaDriver.app (the daemon). Any one-shot CLI
+        // is running from EmuCuaDriver.app (the daemon). Any one-shot CLI
         // spawned by an IDE terminal (Conductor, VS Code, Cursor, Claude
         // Code) inherits the IDE's TCC responsibility chain, so
         // AXIsProcessTrusted() / SCShareableContent.current read against
-        // the IDE's bundle — not com.trycua.driver — and report
+        // the IDE's bundle — not com.emu.cuadriver — and report
         // "NOT granted" even when the user has granted both permissions
-        // to CuaDriver.app. If the daemon were up we'd already have
+        // to EmuCuaDriver.app. If the daemon were up we'd already have
         // forwarded in run(); reaching this branch means no daemon is
         // listening. Warn the user that the fallback answer is unreliable,
         // and force `prompt: false` — the tool's default would otherwise
         // raise a TCC dialog attributed to the calling shell/IDE bundle,
-        // not CuaDriver.app, so the user would grant the wrong identity.
+        // not EmuCuaDriver.app, so the user would grant the wrong identity.
         if toolName == "check_permissions" {
             printToStderr(
                 """
-                ⚠️ Not running inside the cua-driver daemon process. Results may be inaccurate — TCC checks the calling process, not CuaDriver.app, so permissions granted to CuaDriver.app may read as "NOT granted" here.
-                For authoritative results, start the daemon first: `open -n -g -a CuaDriver --args serve`, then re-run this check.
+                ⚠️ Not running inside the emu-cua-driver daemon process. Results may be inaccurate — TCC checks the calling process, not EmuCuaDriver.app, so permissions granted to EmuCuaDriver.app may read as "NOT granted" here.
+                For authoritative results, start the daemon first: `open -n -g -a EmuCuaDriver --args serve`, then re-run this check.
                 """
             )
             var coerced = arguments ?? [:]

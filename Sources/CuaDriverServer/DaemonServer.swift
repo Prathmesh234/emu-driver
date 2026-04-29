@@ -54,7 +54,7 @@ public actor DaemonServer {
         installSignalHandlers()
 
         FileHandle.standardOutput.write(
-            Data("cua-driver daemon started on \(socketPath)\n".utf8)
+            Data("emu-cua-driver daemon started on \(socketPath)\n".utf8)
         )
 
         // Accept loop runs on a detached task so we can await its completion

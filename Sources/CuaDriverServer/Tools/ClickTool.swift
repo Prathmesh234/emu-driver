@@ -403,8 +403,8 @@ public enum ClickTool {
         if !DaemonClient.isDaemonListening(socketPath: socketPath) {
             return
                 "No cached AX state for pid \(pid). Start the daemon first: "
-                + "`open -n -g -a CuaDriver --args serve` "
-                + "(or `cua-driver serve &` — the CLI auto-relaunches via "
+                + "`open -n -g -a EmuCuaDriver --args serve` "
+                + "(or `emu-cua-driver serve &` — the CLI auto-relaunches via "
                 + "`open` if your shell's TCC context is wrong). "
                 + "Element-indexed clicks read a cache populated by "
                 + "`get_window_state`, which only persists across CLI "

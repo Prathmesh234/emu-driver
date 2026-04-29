@@ -1,11 +1,11 @@
 import Foundation
 import MCP
 
-/// Line-delimited JSON protocol between `cua-driver` CLI invocations and a
-/// long-running `cua-driver serve` daemon. One request per line on stdin,
+/// Line-delimited JSON protocol between `emu-cua-driver` CLI invocations and a
+/// long-running `emu-cua-driver serve` daemon. One request per line on stdin,
 /// one response per line on stdout. The point of the daemon is to keep
 /// `AppStateRegistry`-backed state (the per-pid element_index map) alive
-/// across CLI invocations — a fresh `cua-driver call` otherwise starts
+/// across CLI invocations — a fresh `emu-cua-driver call` otherwise starts
 /// with an empty AppStateEngine and fails any element-indexed action.
 
 /// Exit codes mirrored from `CallCommand.swift` so the CLI can reproduce
@@ -22,26 +22,26 @@ public enum DaemonExit {
 /// hygiene. The pid file sits next to it.
 public enum DaemonPaths {
     public static func defaultSocketPath() -> String {
-        return cacheDirectory() + "/cua-driver.sock"
+        return cacheDirectory() + "/emu-cua-driver.sock"
     }
 
     public static func defaultPidFilePath() -> String {
-        return cacheDirectory() + "/cua-driver.pid"
+        return cacheDirectory() + "/emu-cua-driver.pid"
     }
 
     /// Advisory-lock file held by a live daemon for the lifetime of its
     /// process. `flock(LOCK_EX|LOCK_NB)` on this fd is what makes
-    /// `cua-driver serve` fail fast when another daemon is already running
+    /// `emu-cua-driver serve` fail fast when another daemon is already running
     /// (or simultaneously starting). Separate from the pid file because
     /// the pid file gets atomically rewritten (tmpfile + rename), which
     /// drops any flock on the original inode.
     public static func defaultLockFilePath() -> String {
-        return cacheDirectory() + "/cua-driver.lock"
+        return cacheDirectory() + "/emu-cua-driver.lock"
     }
 
     public static func cacheDirectory() -> String {
         let home = ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory()
-        return home + "/Library/Caches/cua-driver"
+        return home + "/Library/Caches/emu-cua-driver"
     }
 }
 

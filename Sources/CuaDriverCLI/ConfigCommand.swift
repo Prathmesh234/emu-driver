@@ -196,7 +196,7 @@ struct ConfigSetCommand: AsyncParsableCommand {
         // Route through the daemon when one's reachable so the live
         // process picks up the new value immediately — the `set_config`
         // tool both persists AND mutates `AgentCursor.shared`. Without
-        // a daemon we still write; any subsequent `cua-driver serve`
+        // a daemon we still write; any subsequent `emu-cua-driver serve`
         // applies it on boot.
         let socketPath = socket ?? DaemonPaths.defaultSocketPath()
         if DaemonClient.isDaemonListening(socketPath: socketPath) {
@@ -265,7 +265,7 @@ struct ConfigSetCommand: AsyncParsableCommand {
             try printConfigJSON(updated)
         case .noDaemon:
             printErr(
-                "cua-driver daemon disappeared — start it with `cua-driver serve &`."
+                "emu-cua-driver daemon disappeared — start it with `emu-cua-driver serve &`."
             )
             throw ExitCode(1)
         case .error(let message):

@@ -62,31 +62,31 @@ log "normal" "Ensuring .release directory exists and is accessible"
 
 # Build the release version
 log "essential" "Building release version..."
-swift build -c release --product cua-driver > /dev/null
+swift build -c release --product emu-cua-driver > /dev/null
 
 # --- Assemble .app bundle ---
 log "essential" "Assembling .app bundle..."
 
-APP_BUNDLE=".release/CuaDriver.app"
+APP_BUNDLE=".release/EmuCuaDriver.app"
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 # Copy the binary into the bundle
-cp -f .build/release/cua-driver "$APP_BUNDLE/Contents/MacOS/cua-driver"
+cp -f .build/release/emu-cua-driver "$APP_BUNDLE/Contents/MacOS/emu-cua-driver"
 
 # Stamp and copy Info.plist — the source plist ships with a static
 # `CFBundleShortVersionString` for dev builds; substitute the release
 # version on the way into the bundle so dev state is left untouched.
 sed "s/<string>0.0.1<\/string>/<string>$VERSION<\/string>/" "./App/CuaDriver/Info.plist" > "$APP_BUNDLE/Contents/Info.plist"
 
-# Claude Code skill pack. install.sh symlinks ~/.claude/skills/cua-driver
+# Claude Code skill pack. install.sh symlinks ~/.claude/skills/emu-cua-driver
 # into this bundle path when a Claude Code install is detected. Ship
 # the skill inside the .app so it survives auto-updates.
 if [ -d "Skills/cua-driver" ]; then
     log "essential" "Copying Claude Code skill pack into bundle..."
     mkdir -p "$APP_BUNDLE/Contents/Resources/Skills"
-    cp -R Skills/cua-driver "$APP_BUNDLE/Contents/Resources/Skills/cua-driver"
+    cp -R Skills/cua-driver "$APP_BUNDLE/Contents/Resources/Skills/emu-cua-driver"
 fi
 
 # --- Sign the .app bundle ---
@@ -119,23 +119,23 @@ log "essential" "Signature verified successfully."
 log "essential" "Building installer package..."
 
 TEMP_ROOT=$(mktemp -d)
-mkdir -p "$TEMP_ROOT/usr/local/share/cua-driver"
+mkdir -p "$TEMP_ROOT/usr/local/share/emu-cua-driver"
 # Use ditto to preserve code signatures and extended attributes
-ditto "$APP_BUNDLE" "$TEMP_ROOT/usr/local/share/cua-driver/CuaDriver.app"
+ditto "$APP_BUNDLE" "$TEMP_ROOT/usr/local/share/emu-cua-driver/EmuCuaDriver.app"
 
 if ! pkgbuild --root "$TEMP_ROOT" \
-         --identifier "com.trycua.driver" \
+         --identifier "com.emu.cuadriver" \
          --version "$VERSION" \
          --install-location "/" \
          --sign "$CERT_INSTALLER_NAME" \
-         ./.release/cua-driver.pkg; then
+         ./.release/emu-cua-driver.pkg; then
     log "error" "Failed to build installer package"
     exit 1
 fi
 
 # Verify the package was created
-if [ ! -f "./.release/cua-driver.pkg" ]; then
-    log "error" "Package file ./.release/cua-driver.pkg was not created"
+if [ ! -f "./.release/emu-cua-driver.pkg" ]; then
+    log "error" "Package file ./.release/emu-cua-driver.pkg was not created"
     exit 1
 fi
 
@@ -145,7 +145,7 @@ log "essential" "Package created successfully"
 log "essential" "Submitting for notarization..."
 if [ "$LOG_LEVEL" = "minimal" ] || [ "$LOG_LEVEL" = "none" ]; then
   # Minimal output - capture ID but hide details
-  NOTARY_OUTPUT=$(xcrun notarytool submit ./.release/cua-driver.pkg \
+  NOTARY_OUTPUT=$(xcrun notarytool submit ./.release/emu-cua-driver.pkg \
       --apple-id "${APPLE_ID}" \
       --team-id "${TEAM_ID}" \
       --password "${APP_SPECIFIC_PASSWORD}" \
@@ -176,7 +176,7 @@ if [ "$LOG_LEVEL" = "minimal" ] || [ "$LOG_LEVEL" = "none" ]; then
   fi
 else
   # Normal verbose output
-  if ! xcrun notarytool submit ./.release/cua-driver.pkg \
+  if ! xcrun notarytool submit ./.release/emu-cua-driver.pkg \
       --apple-id "${APPLE_ID}" \
       --team-id "${TEAM_ID}" \
       --password "${APP_SPECIFIC_PASSWORD}" \
@@ -205,7 +205,7 @@ fi
 
 # Staple the notarization ticket to the .pkg
 log "essential" "Stapling notarization ticket to .pkg..."
-if ! xcrun stapler staple ./.release/cua-driver.pkg > /dev/null 2>&1; then
+if ! xcrun stapler staple ./.release/emu-cua-driver.pkg > /dev/null 2>&1; then
   log "error" "Failed to staple notarization ticket to .pkg"
   exit 1
 fi
@@ -227,29 +227,29 @@ log "essential" "Creating archives in $RELEASE_DIR..."
 cd "$RELEASE_DIR"
 
 # Clean up any existing artifacts first to avoid conflicts
-rm -f cua-driver-*.tar.gz cua-driver-*.pkg.tar.gz
+rm -f emu-cua-driver-*.tar.gz emu-cua-driver-*.pkg.tar.gz
 
 # Create a backward-compatible wrapper script at the tarball root so
-# extracting the tarball and running `./cua-driver <tool>` works
+# extracting the tarball and running `./emu-cua-driver <tool>` works
 # regardless of whether the .app is moved to /Applications yet.
-cat > cua-driver <<'WRAPPER_EOF'
+cat > emu-cua-driver <<'WRAPPER_EOF'
 #!/bin/sh
-exec "$(dirname "$0")/CuaDriver.app/Contents/MacOS/cua-driver" "$@"
+exec "$(dirname "$0")/EmuCuaDriver.app/Contents/MacOS/emu-cua-driver" "$@"
 WRAPPER_EOF
-chmod +x cua-driver
+chmod +x emu-cua-driver
 
 # Create version-specific archives
 log "essential" "Creating version-specific archives (${VERSION})..."
 
 # Package the .app bundle and wrapper script
-tar -czf "cua-driver-${VERSION}-${OS_IDENTIFIER}.tar.gz" cua-driver CuaDriver.app > /dev/null 2>&1
+tar -czf "emu-cua-driver-${VERSION}-${OS_IDENTIFIER}.tar.gz" emu-cua-driver EmuCuaDriver.app > /dev/null 2>&1
 
 # Package the installer
-tar -czf "cua-driver-${VERSION}-${OS_IDENTIFIER}.pkg.tar.gz" cua-driver.pkg > /dev/null 2>&1
+tar -czf "emu-cua-driver-${VERSION}-${OS_IDENTIFIER}.pkg.tar.gz" emu-cua-driver.pkg > /dev/null 2>&1
 
 # Create sha256 checksum file
 log "essential" "Generating checksums..."
-shasum -a 256 cua-driver-*.tar.gz > checksums.txt
+shasum -a 256 emu-cua-driver-*.tar.gz > checksums.txt
 log "essential" "Package created successfully with checksums generated."
 
 # Show what's in the release directory

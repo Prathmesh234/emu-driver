@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# cua-driver installer — download the latest signed + notarized tarball
-# from GitHub Releases, move CuaDriver.app to /Applications, and symlink
-# the `cua-driver` binary into ~/.local/bin so shell users can invoke
+# emu-cua-driver installer — download the latest signed + notarized tarball
+# from GitHub Releases, move EmuCuaDriver.app to /Applications, and symlink
+# the `emu-cua-driver` binary into ~/.local/bin so shell users can invoke
 # it without typing the bundle path. Sudo-free.
 #
 # Usage (from README + release body):
 #   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)"
 #
 # Flags:
-#   --bin-dir <path>     install the cua-driver wrapper to <path> instead of
+#   --bin-dir <path>     install the emu-cua-driver wrapper to <path> instead of
 #                        ~/.local/bin (e.g. /usr/local/bin — that target needs sudo)
 #   --no-modify-path     skip auto-appending an `export PATH=...` line to your
 #                        shell rc when ~/.local/bin is missing from PATH
@@ -22,10 +22,10 @@
 #   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/uninstall.sh)"
 set -euo pipefail
 
-REPO="trycua/cua"
-APP_NAME="CuaDriver.app"
-BINARY_NAME="cua-driver"
-TAG_PREFIX="cua-driver-v"
+REPO="Prathmesh234/emu-driver"
+APP_NAME="EmuCuaDriver.app"
+BINARY_NAME="emu-cua-driver"
+TAG_PREFIX="emu-cua-driver-v"
 APP_DEST="/Applications/$APP_NAME"
 BIN_DIR="${CUA_DRIVER_BIN_DIR:-$HOME/.local/bin}"
 NO_MODIFY_PATH="${CUA_DRIVER_NO_MODIFY_PATH:-0}"
@@ -50,7 +50,7 @@ err() { printf 'error: %s\n' "$*" >&2; }
 # --- Sanity checks ------------------------------------------------------
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-    err "cua-driver is macOS-only; uname reports $(uname -s)"
+    err "emu-cua-driver is macOS-only; uname reports $(uname -s)"
     exit 1
 fi
 
@@ -85,7 +85,7 @@ fi
 
 ARCH=$(uname -m)
 VERSION="${TAG#${TAG_PREFIX}}"
-TARBALL="cua-driver-${VERSION}-darwin-${ARCH}.tar.gz"
+TARBALL="emu-cua-driver-${VERSION}-darwin-${ARCH}.tar.gz"
 URL="https://github.com/$REPO/releases/download/$TAG/$TARBALL"
 
 log "downloading $URL"
@@ -133,7 +133,7 @@ ditto "$TMP_DIR/$APP_NAME" "$APP_DEST"
 
 # --- Wrapper / symlink for CLI ------------------------------------------
 #
-# Default install location is ~/.local/bin/cua-driver — no sudo. Power
+# Default install location is ~/.local/bin/emu-cua-driver — no sudo. Power
 # users can override via --bin-dir or $CUA_DRIVER_BIN_DIR. We refuse to
 # write to root-owned dirs (e.g. /usr/local/bin) without an explicit opt-in.
 
@@ -151,9 +151,9 @@ fi
 ln -sf "$APP_BINARY" "$BIN_LINK"
 log "symlinked $BIN_LINK -> $APP_BINARY"
 
-# Existing /usr/local/bin/cua-driver from older installs stays in place
+# Existing /usr/local/bin/emu-cua-driver from older installs stays in place
 # so MCP client configs that reference it keep working — its target is the
-# same /Applications/CuaDriver.app/.../cua-driver binary that we just
+# same /Applications/EmuCuaDriver.app/.../emu-cua-driver binary that we just
 # refreshed, so the link is still valid post-upgrade.
 LEGACY_BIN_LINK="/usr/local/bin/$BINARY_NAME"
 if [[ "$BIN_LINK" != "$LEGACY_BIN_LINK" ]] && [[ -L "$LEGACY_BIN_LINK" ]]; then
@@ -164,7 +164,7 @@ fi
 #
 # Drop a symlink for each detected agent that auto-loads Anthropic-format
 # SKILL.md skills from a folder. Auto-updates atomically replace
-# /Applications/CuaDriver.app so the symlinks stay valid across releases.
+# /Applications/EmuCuaDriver.app so the symlinks stay valid across releases.
 # We never overwrite an existing link or directory — dev users with a
 # symlink pointing at a working copy of the repo keep theirs.
 #
@@ -183,12 +183,12 @@ fi
 #             user customisations.
 #   - Pi    : SYSTEM.md / AGENTS.md are single-file replacements; same risk.
 
-SKILL_TARGET="$APP_DEST/Contents/Resources/Skills/cua-driver"
+SKILL_TARGET="$APP_DEST/Contents/Resources/Skills/emu-cua-driver"
 
 link_skill_into() {
     local parent_dir="$1"        # e.g. $HOME/.claude/skills
     local label="$2"             # e.g. "Claude Code"
-    local link_path="$parent_dir/cua-driver"
+    local link_path="$parent_dir/emu-cua-driver"
 
     if [[ ! -d "$parent_dir" ]]; then
         return 0
@@ -264,7 +264,7 @@ if [[ "$PATH_NEEDS_FIX" == "1" ]]; then
                 log "$BIN_DIR already referenced in $RC_FILE (skipping rc edit)"
             else
                 {
-                    printf '\n# Added by cua-driver installer — see https://github.com/trycua/cua\n'
+                    printf '\n# Added by emu-cua-driver installer — see https://github.com/Prathmesh234/emu-driver\n'
                     printf '%s\n' "$EXPORT_LINE"
                 } >> "$RC_FILE"
                 log "appended PATH entry to $RC_FILE — restart your shell or run: source $RC_FILE"
@@ -277,39 +277,39 @@ fi
 
 # --- Done ---------------------------------------------------------------
 
-log "cua-driver $VERSION installed"
+log "emu-cua-driver $VERSION installed"
 cat <<FINALEOF
 
 Next steps:
 
   1. Grant macOS permissions (required either way):
-       open -n -g -a CuaDriver --args serve
-       cua-driver check_permissions
+       open -n -g -a EmuCuaDriver --args serve
+       emu-cua-driver check_permissions
      macOS raises the Accessibility + Screen Recording dialogs.
      Grant both, then re-run check_permissions to confirm.
 
-  2. Pick how you want to use cua-driver — pick ONE, both, or switch later:
+  2. Pick how you want to use emu-cua-driver — pick ONE, both, or switch later:
 
      A. As a CLI from the shell (no extra config needed):
-          cua-driver list_apps
-          cua-driver --help
+          emu-cua-driver list_apps
+          emu-cua-driver --help
 
      B. As an MCP server — run the one matching your client. Each is also
-        available via 'cua-driver mcp-config --client <name>':
+        available via 'emu-cua-driver mcp-config --client <name>':
 
         • Claude Code:
-            claude mcp add --transport stdio cua-driver -- $BIN_LINK mcp
+            claude mcp add --transport stdio emu-cua-driver -- $BIN_LINK mcp
 
         • Codex (OpenAI):
-            codex mcp add cua-driver -- $BIN_LINK mcp
+            codex mcp add emu-cua-driver -- $BIN_LINK mcp
 
         • OpenClaw:
-            cua-driver mcp-config --client openclaw
+            emu-cua-driver mcp-config --client openclaw
 
         • GitHub Copilot CLI (paste into ~/.copilot/mcp-config.json):
             {
               "mcpServers": {
-                "cua-driver": {
+                "emu-cua-driver": {
                   "type": "local",
                   "command": "$BIN_LINK",
                   "args": ["mcp"],
@@ -320,12 +320,12 @@ Next steps:
             Or inside gh copilot chat: /mcp add → type=STDIO, command=$BIN_LINK, args=mcp
 
         • Cursor / OpenCode / Hermes (no add CLI — paste config):
-            cua-driver mcp-config --client cursor     # JSON for ~/.cursor/mcp.json
-            cua-driver mcp-config --client opencode   # JSON for opencode.json
-            cua-driver mcp-config --client hermes     # YAML for ~/.hermes/config.yaml
+            emu-cua-driver mcp-config --client cursor     # JSON for ~/.cursor/mcp.json
+            emu-cua-driver mcp-config --client opencode   # JSON for opencode.json
+            emu-cua-driver mcp-config --client hermes     # YAML for ~/.hermes/config.yaml
 
         For other clients accepting the generic mcpServers shape:
-            cua-driver mcp-config
+            emu-cua-driver mcp-config
 
-Docs: https://github.com/trycua/cua/tree/main/libs/cua-driver
+Docs: https://github.com/Prathmesh234/emu-driver
 FINALEOF

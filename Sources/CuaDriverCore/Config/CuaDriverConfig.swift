@@ -33,10 +33,10 @@ public struct CuaDriverConfig: Codable, Sendable, Equatable {
     /// no screen-capture call) for pure element_index workflows.
     public var captureMode: CaptureMode
 
-    /// Anonymous telemetry opt-out. Default `true` (opt-in) to match
-    /// lume's posture. Override at run time via
-    /// `CUA_DRIVER_TELEMETRY_ENABLED={0|1}` or mutate persistently via
-    /// `cua-driver config telemetry {enable|disable}`.
+    /// Anonymous telemetry opt-out. Default `false` (opt-out) for emu-cua-driver.
+    /// Telemetry code is retained for future use if tracking is desired.
+    /// Override at run time via `CUA_DRIVER_TELEMETRY_ENABLED={0|1}` or
+    /// mutate persistently via `emu-cua-driver config telemetry {enable|disable}`.
     public var telemetryEnabled: Bool
 
     /// Automatic update opt-out. Default `true` (auto-update enabled).
@@ -72,7 +72,7 @@ public struct CuaDriverConfig: Codable, Sendable, Equatable {
         schemaVersion: Int = 1,
         agentCursor: AgentCursorConfig = .default,
         captureMode: CaptureMode = .som,
-        telemetryEnabled: Bool = true,
+        telemetryEnabled: Bool = false,
         autoUpdateEnabled: Bool = true,
         maxImageDimension: Int = CuaDriverConfig.defaultMaxImageDimension
     ) {
@@ -115,7 +115,7 @@ public struct CuaDriverConfig: Codable, Sendable, Equatable {
                 CaptureMode.self, forKey: .captureMode
             )) ?? .som
         self.telemetryEnabled =
-            (try? container.decode(Bool.self, forKey: .telemetryEnabled)) ?? true
+            (try? container.decode(Bool.self, forKey: .telemetryEnabled)) ?? false
         self.autoUpdateEnabled =
             (try? container.decode(Bool.self, forKey: .autoUpdateEnabled)) ?? true
         self.maxImageDimension =

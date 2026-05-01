@@ -235,6 +235,9 @@ public struct AgentCursorConfig: Codable, Sendable, Equatable {
         /// focus-rect highlight drawn around clicked AX elements.
         public var bloomColor: String?
 
+        /// Drawn cursor size in points. When nil, uses AgentCursorStyle.default.
+        public var shapeSize: Double?
+
         /// Absolute or `~`-rooted path to a PNG, JPEG, PDF, or SVG file
         /// that replaces the default procedural arrow shape.
         public var imagePath: String?
@@ -242,10 +245,12 @@ public struct AgentCursorConfig: Codable, Sendable, Equatable {
         public init(
             gradientColors: [String]? = nil,
             bloomColor: String? = nil,
+            shapeSize: Double? = nil,
             imagePath: String? = nil
         ) {
             self.gradientColors = gradientColors
             self.bloomColor = bloomColor
+            self.shapeSize = shapeSize
             self.imagePath = imagePath
         }
 

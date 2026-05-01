@@ -57,7 +57,7 @@ public struct AgentCursorView: View {
 
         let style = renderer.style
         let bloomColor = Color(nsColor: style.bloomColor)
-        let bloomR: CGFloat = 22
+        let bloomR: CGFloat = max(20, style.shapeSize * 1.3)
         let bloomRect = CGRect(x: p.x - bloomR, y: p.y - bloomR,
                                width: bloomR * 2, height: bloomR * 2)
 
@@ -88,11 +88,13 @@ public struct AgentCursorView: View {
                         in: CGRect(x: -s / 2, y: -s / 2, width: s, height: s))
         } else {
             // Procedural arrow mode: 4-vertex pointer shape with gradient fill.
+            let baseSize: CGFloat = 22
+            let scale = max(0.1, style.shapeSize / baseSize)
             var shape = Path()
-            shape.move(to: CGPoint(x: 14, y: 0))
-            shape.addLine(to: CGPoint(x: -8, y: -9))
-            shape.addLine(to: CGPoint(x: -3, y: 0))
-            shape.addLine(to: CGPoint(x: -8, y: 9))
+            shape.move(to: CGPoint(x: 14 * scale, y: 0))
+            shape.addLine(to: CGPoint(x: -8 * scale, y: -9 * scale))
+            shape.addLine(to: CGPoint(x: -3 * scale, y: 0))
+            shape.addLine(to: CGPoint(x: -8 * scale, y: 9 * scale))
             shape.closeSubpath()
 
             let transform = CGAffineTransform(translationX: p.x, y: p.y)
@@ -107,8 +109,8 @@ public struct AgentCursorView: View {
                 transformed,
                 with: .linearGradient(
                     Gradient(colors: gradientColors),
-                    startPoint: CGPoint(x: p.x + 14, y: p.y - 9),
-                    endPoint: CGPoint(x: p.x - 8, y: p.y + 9)
+                    startPoint: CGPoint(x: p.x + 14 * scale, y: p.y - 9 * scale),
+                    endPoint: CGPoint(x: p.x - 8 * scale, y: p.y + 9 * scale)
                 )
             )
             ctx.stroke(transformed, with: .color(.white), lineWidth: style.strokeWidth)

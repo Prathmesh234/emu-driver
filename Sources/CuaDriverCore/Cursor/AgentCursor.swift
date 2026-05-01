@@ -70,7 +70,7 @@ public struct AgentCursorStyle: @unchecked Sendable {
 
     public init(
         containerSize: CGFloat = 60,
-        shapeSize: CGFloat = 22,
+        shapeSize: CGFloat = 16,
         strokeGradientStops: [AgentCursorGradientStop] = AgentCursorStyle.defaultGradientStops,
         strokeGradientAngleDegrees: CGFloat = 135,
         strokeWidth: CGFloat = 2,
@@ -208,11 +208,8 @@ public final class AgentCursor {
     /// How long the overlay lingers after the last pointer action
     /// before it auto-hides. Each `animateAndWait` / `finishClick`
     /// resets this timer, so a burst of back-to-back clicks keeps the
-    /// cursor visible throughout; then it slides off after the driver
-    /// has been idle this long. 3s leaves comfortable headroom for a
-    /// follow-up action to arrive without the overlay popping in and
-    /// out, while still being short enough that the cursor is gone
-    /// before the user starts wondering if the agent is still running.
+    /// cursor visible throughout. A value <= 0 disables auto-hide so the
+    /// cursor remains visible until the driver process exits.
     public var idleHideDelay: TimeInterval = 8.0
 
     private var overlay: AgentCursorOverlayWindow?
@@ -332,6 +329,7 @@ public final class AgentCursor {
             nsImage = NSImage(contentsOf: URL(fileURLWithPath: (path as NSString).expandingTildeInPath))
         }
         setStyle(AgentCursorStyle(
+            shapeSize: styleConfig.shapeSize.map { CGFloat($0) } ?? AgentCursorStyle.default.shapeSize,
             strokeGradientStops: gradientStops,
             bloomColor: bloomColor,
             image: nsImage
@@ -428,11 +426,17 @@ public final class AgentCursor {
             // BUT — a single missed tick is usually just a mid-raise
             // frame where `visibleWindows()` transiently returns no
             // match. Hiding on the first miss caused the overlay to
-            // vanish for ~1s during every click. Require ≥2
-            // consecutive misses before hiding; the next scheduled
-            // repin tick (60–300ms later) will catch the window
-            // once it's back on screen and reset the counter.
+            // vanish for ~1s during every click. When auto-hide is
+            // disabled, keep the cursor parked at its last position
+            // instead of flickering out. Otherwise require ≥2
+            // consecutive misses before hiding; the next repin tick
+            // will catch the window once it's back on screen and reset
+            // the counter.
             missedPinCount += 1
+            if idleHideDelay <= 0 {
+                if !win.isVisible { win.orderFrontRegardless() }
+                return
+            }
             if missedPinCount >= 2 {
                 if win.isVisible { win.orderOut(nil) }
                 pinnedWindowId = nil
@@ -440,6 +444,9 @@ public final class AgentCursor {
             return
         }
         missedPinCount = 0
+        if !win.isVisible {
+            win.orderFrontRegardless()
+        }
         // Place the overlay just above the target within the `.normal`
         // window level — producing the ordering:
         //   [target-window, overlay, windows-that-were-above-target]
@@ -535,7 +542,7 @@ public final class AgentCursor {
         let duration = duration ?? glideDurationSeconds
         cancelIdleHide()  // incoming activity — defer auto-hide
         show()  // ensure the overlay is visible; no-op if already shown
-        animate(to: point)
+        animate(to: point, duration: duration, options: options)
         // Block until the cursor reaches the endpoint (spring begins).
         // The actual click fires immediately after this returns, so the
         // user sees the cursor land before the AX action dispatches.
@@ -633,6 +640,7 @@ public final class AgentCursor {
     private func scheduleIdleHide() {
         cancelIdleHide()
         let delay = idleHideDelay
+        guard delay > 0 else { return }
         idleHideTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard !Task.isCancelled else { return }

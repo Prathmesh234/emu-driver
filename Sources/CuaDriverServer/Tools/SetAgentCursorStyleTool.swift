@@ -20,6 +20,8 @@ public enum SetAgentCursorStyleTool {
                   E.g. ["#FF6B6B", "#FF8E53"] for a red-orange arrow.
                 - bloom_color: CSS hex string for the glow halo and the
                   focus-rect highlight drawn around clicked elements.
+                - shape_size: Drawn cursor size in points. Smaller values
+                  make the cursor less visually dominant.
                 - image_path: Absolute or ~-rooted path to a PNG, JPEG,
                   PDF, or SVG file. When set, replaces the default arrow
                   with this image (drawn at shapeSize × shapeSize points,
@@ -27,7 +29,7 @@ public enum SetAgentCursorStyleTool {
                   string) to revert to the procedural arrow.
 
                 Example — brand-colored arrow:
-                  {"gradient_colors": ["#A855F7", "#6366F1"], "bloom_color": "#A855F7"}
+                  {"gradient_colors": ["#A855F7", "#6366F1"], "bloom_color": "#A855F7", "shape_size": 18}
 
                 Example — custom PNG cursor:
                   {"image_path": "~/cursors/my-cursor.png"}
@@ -43,13 +45,19 @@ public enum SetAgentCursorStyleTool {
                         "items": ["type": "string"],
                         "description": "CSS hex color strings for gradient stops (tip to tail). Empty array reverts to default.",
                     ],
-                    "bloom_color": [
-                        "type": "string",
-                        "description": "CSS hex color for the bloom halo and focus rect. Empty string reverts to default.",
-                    ],
-                    "image_path": [
-                        "type": "string",
-                        "description": "Path to PNG/JPEG/PDF/SVG cursor image. Empty string reverts to arrow.",
+                     "bloom_color": [
+                         "type": "string",
+                         "description": "CSS hex color for the bloom halo and focus rect. Empty string reverts to default.",
+                     ],
+                     "shape_size": [
+                         "type": "number",
+                         "minimum": 10,
+                         "maximum": 40,
+                         "description": "Drawn cursor size in points. Omit to keep current size.",
+                     ],
+                     "image_path": [
+                         "type": "string",
+                         "description": "Path to PNG/JPEG/PDF/SVG cursor image. Empty string reverts to arrow.",
                     ],
                 ],
                 "additionalProperties": false,
@@ -62,6 +70,11 @@ public enum SetAgentCursorStyleTool {
             )
         ),
         invoke: { arguments in
+            func number(_ value: Value?) -> Double? {
+                if let i = value?.intValue { return Double(i) }
+                return value?.doubleValue
+            }
+
             // Read current persisted style; we'll mutate only the supplied fields.
             var styleConfig = await ConfigStore.shared.load().agentCursor.style
 
@@ -72,6 +85,10 @@ public enum SetAgentCursorStyleTool {
 
             if let bloomStr = arguments?["bloom_color"]?.stringValue {
                 styleConfig.bloomColor = bloomStr.isEmpty ? nil : bloomStr
+            }
+
+            if let shapeSize = number(arguments?["shape_size"]) {
+                styleConfig.shapeSize = min(40, max(10, shapeSize))
             }
 
             if let pathStr = arguments?["image_path"]?.stringValue {
@@ -101,6 +118,7 @@ public enum SetAgentCursorStyleTool {
             var parts: [String] = []
             if let gc = styleConfig.gradientColors { parts.append("gradient_colors=[\(gc.joined(separator: ","))]") }
             if let bc = styleConfig.bloomColor { parts.append("bloom_color=\(bc)") }
+            if let ss = styleConfig.shapeSize { parts.append("shape_size=\(ss)") }
             if let ip = styleConfig.imagePath { parts.append("image_path=\(ip)") }
             let summary = parts.isEmpty ? "reverted to default" : parts.joined(separator: " ")
             return CallTool.Result(

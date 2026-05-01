@@ -42,11 +42,13 @@ public enum SetAgentCursorMotionTool {
                   clicks read as human pacing. Only applied while
                   the cursor is enabled. Typical: 400.
                 - idle_hide_ms: how long the overlay lingers after
-                  the last pointer action before auto-hiding.
+                  the last pointer action before auto-hiding. Set 0
+                  to disable auto-hide until the driver exits.
                   Re-armed by every click, so a burst of consecutive
                   actions keeps the cursor visible throughout. Higher
                   = more tolerant of follow-up actions without the
-                  overlay popping in and out. Typical: 3000.
+                  overlay popping in and out. 0 = never auto-hide.
+                  Typical: 3000.
 
                 Defaults: start_handle=0.3, end_handle=0.3, arc_size=0.25,
                 arc_flow=0.0, spring=0.72, glide_duration_ms=750,
@@ -92,8 +94,8 @@ public enum SetAgentCursorMotionTool {
                     "idle_hide_ms": [
                         "type": "number",
                         "description":
-                            "How long the overlay lingers after the last click before auto-hiding, in ms. Default 3000.",
-                        "minimum": 100,
+                            "How long the overlay lingers after the last click before auto-hiding, in ms. 0 disables auto-hide. Default 3000.",
+                        "minimum": 0,
                         "maximum": 60000,
                     ],
                 ],

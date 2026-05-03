@@ -46,10 +46,11 @@ pixels:
    `hotkey({pid, keys: ["cmd", "enter"]})`, `hotkey({pid, keys:
    ["cmd", "k"]})`, etc. Posted via `CGEvent.postToPid`, reaches the
    target regardless of AX state, no activation required.
-3. For typing into web inputs, use `type_text` — it automatically
-   falls back to CGEvent synthesis when the input doesn't implement
-   `AXSelectedText`, reaching any focused keyboard receiver including
-   Unicode / emoji.
+3. For typing into web inputs, start with `type_text` against the
+   field's `element_index`. If it reports AX success but verification
+   shows no visible/input-handler change, focus the field and use
+   `type_text_chars` — pure CGEvent keystrokes reach any focused
+   keyboard receiver, including Unicode / emoji.
 4. If none of the above reaches the target, tell the user this
    interaction isn't reachable from the driver today and ask for
    guidance.
@@ -86,7 +87,7 @@ documented only as historical context:
 ```
 # DON'T DO THIS — ⌘L steals focus. Use launch_app above.
 hotkey({pid, keys: ["cmd", "l"]})
-type_text({pid, text: "https://cua.ai", delay_ms: 30})
+type_text_chars({pid, text: "https://cua.ai", delay_ms: 30})
 get_window_state({pid, window_id})
 click({pid, window_id, element_index: <suggestion>})
 ```
@@ -157,7 +158,7 @@ When the target window is **minimized** (genie'd into the Dock):
   `AXFocused=true` on a minimized window's descendants doesn't
   propagate to real keyboard focus). Symptom: macOS system-alert
   beep, or silent no-op. Example: `hotkey cmd+L` +
-  `type_text URL` + `press_key return` on minimized Chrome —
+  `type_text_chars URL` + `press_key return` on minimized Chrome —
   the URL lands in the omnibox AX value but Return doesn't commit
   the navigation.
 - **Primary workaround — use `set_value` to commit directly**: For
@@ -464,8 +465,7 @@ Playwright / a WebExtension with Native Messaging for Firefox.
 type_text({pid, window_id, element_index: <input_field>, text: "…"})
 ```
 
-If it silently drops (some web inputs don't implement
-`AXSelectedText`), `type_text` automatically falls back to CGEvent
-synthesis — pure CGEvent keystrokes delivered to the pid, reaching
-any focused keyboard receiver. You can also click the field first
-to ensure focus before typing.
+If `type_text` reports success but verification shows the field did not
+visibly update or the page did not react, click/focus the field first,
+then use `type_text_chars({pid, text})` — pure CGEvent keystrokes
+delivered to the pid, reaching any focused keyboard receiver.

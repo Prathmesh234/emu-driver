@@ -33,10 +33,12 @@ public struct ToolRegistry: Sendable {
     /// toggle itself.
     public static let actionToolNames: Set<String> = [
         "click",
+        "double_click",
         "right_click",
         "drag",
         "scroll",
         "type_text",
+        "type_text_chars",
         "press_key",
         "hotkey",
         "set_value",
@@ -48,6 +50,7 @@ public struct ToolRegistry: Sendable {
     /// natural "dot" location and skip the marker file.
     public static let clickFamilyToolNames: Set<String> = [
         "click",
+        "double_click",
         "right_click",
     ]
 
@@ -223,6 +226,7 @@ public struct ToolRegistry: Sendable {
         MoveCursorTool.handler,
         ScrollTool.handler,
         TypeTextTool.handler,
+        TypeTextCharsTool.handler,
         PressKeyTool.handler,
         HotkeyTool.handler,
         GetWindowStateTool.handler,

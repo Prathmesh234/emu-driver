@@ -13,7 +13,7 @@ public enum GetWindowStateTool {
             description: """
                 Walk a running app's AX tree and return a Markdown rendering of its
                 UI, tagging every actionable element with [element_index N]. Pass
-                those indices to `click`, `type_text_in`, `scroll_in`, etc. — those
+                those indices to `click`, `type_text`, `scroll`, etc. — those
                 tools resolve the index to the cached AXUIElement on the server.
 
                 INVARIANT: call `get_window_state` once per turn per (pid, window_id)

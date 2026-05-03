@@ -5,7 +5,7 @@
 # it without typing the bundle path. Sudo-free.
 #
 # Usage (from README + release body):
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Prathmesh234/emu-driver/main/scripts/install.sh)"
 #
 # Flags:
 #   --bin-dir <path>     install the emu-cua-driver wrapper to <path> instead of
@@ -19,7 +19,7 @@
 #   CUA_DRIVER_NO_MODIFY_PATH=1  same as --no-modify-path
 #
 # Uninstall:
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/uninstall.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Prathmesh234/emu-driver/main/scripts/uninstall.sh)"
 set -euo pipefail
 
 REPO="Prathmesh234/emu-driver"
@@ -105,12 +105,12 @@ fi
 # --- Clean up legacy bits from ≤ v0.0.5 ---------------------------------
 #
 # v0.0.5 and earlier installed a weekly LaunchAgent. v0.0.6 dropped it in
-# favor of an explicit `cua-driver update` command. The companion
-# /usr/local/bin/cua-driver-update script is root-owned and removed by
-# `cua-driver doctor` (sudo prompt) — we keep install.sh fully sudo-free.
+# favor of an explicit `emu-cua-driver update` command. The companion
+# /usr/local/bin/emu-cua-driver-update script is root-owned and removed by
+# `emu-cua-driver doctor` (sudo prompt) — we keep install.sh fully sudo-free.
 
-LEGACY_UPDATER_PLIST="$HOME/Library/LaunchAgents/com.trycua.cua_driver_updater.plist"
-LEGACY_UPDATE_SCRIPT="/usr/local/bin/cua-driver-update"
+LEGACY_UPDATER_PLIST="$HOME/Library/LaunchAgents/com.emu.cuadriver.updater.plist"
+LEGACY_UPDATE_SCRIPT="/usr/local/bin/emu-cua-driver-update"
 
 if [[ -f "$LEGACY_UPDATER_PLIST" ]]; then
     launchctl unload "$LEGACY_UPDATER_PLIST" 2>/dev/null || true
@@ -118,7 +118,7 @@ if [[ -f "$LEGACY_UPDATER_PLIST" ]]; then
     log "removed legacy LaunchAgent $LEGACY_UPDATER_PLIST"
 fi
 if [[ -f "$LEGACY_UPDATE_SCRIPT" ]]; then
-    log "legacy $LEGACY_UPDATE_SCRIPT still present (run \`cua-driver doctor\` to remove — needs sudo)"
+    log "legacy $LEGACY_UPDATE_SCRIPT still present (run \`emu-cua-driver doctor\` to remove — needs sudo)"
 fi
 
 # --- Install .app bundle ------------------------------------------------
@@ -264,7 +264,7 @@ if [[ "$PATH_NEEDS_FIX" == "1" ]]; then
                 log "$BIN_DIR already referenced in $RC_FILE (skipping rc edit)"
             else
                 {
-                    printf '\n# Added by emu-cua-driver installer — see https://github.com/Prathmesh234/emu-driver\n'
+                    printf '\n# Added by emu-cua-driver installer — see https://github.com/trycua/cua\n'
                     printf '%s\n' "$EXPORT_LINE"
                 } >> "$RC_FILE"
                 log "appended PATH entry to $RC_FILE — restart your shell or run: source $RC_FILE"
@@ -299,6 +299,14 @@ Next steps:
 
         • Claude Code:
             claude mcp add --transport stdio emu-cua-driver -- $BIN_LINK mcp
+
+          Claude Code computer-use compatibility mode:
+            claude mcp add --transport stdio emu-cua-computer-use -- $BIN_LINK mcp --claude-code-computer-use-compat
+          Use this when you want Claude Code's vision/computer-use-style flow
+          to ground on EmuCuaDriver window screenshots. It keeps the normal
+          EmuCuaDriver tools and changes only the screenshot tool.
+          Use MCP for this path; CLI screenshots do not expose the
+          mcp__emu-cua-computer-use__screenshot tool name cue.
 
         • Codex (OpenAI):
             codex mcp add emu-cua-driver -- $BIN_LINK mcp

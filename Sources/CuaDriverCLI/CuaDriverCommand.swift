@@ -8,7 +8,7 @@ import MCP
 struct CuaDriverCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "emu-cua-driver",
-        abstract: "Emu macOS Accessibility-driven computer-use driver — MCP stdio server.",
+        abstract: "macOS Accessibility-driven computer-use agent — MCP stdio server.",
         version: CuaDriverCore.version,
         subcommands: [
             MCPCommand.self,
@@ -24,14 +24,15 @@ struct CuaDriverCommand: AsyncParsableCommand {
             UpdateCommand.self,
             DiagnoseCommand.self,
             DoctorCommand.self,
+            DumpDocsCommand.self,
         ]
     )
 }
 
-/// `cua-driver mcp-config` — print the JSON snippet that MCP clients
+/// `emu-cua-driver mcp-config` — print the JSON snippet that MCP clients
 /// (Claude Code, Cursor, custom SDK clients) need to register
-/// cua-driver as an MCP server. Paste into `~/.claude/mcp.json` (or
-/// equivalent) and the client auto-spawns cua-driver on demand.
+/// emu-cua-driver as an MCP server. Paste into `~/.claude/mcp.json` (or
+/// equivalent) and the client auto-spawns emu-cua-driver on demand.
 struct MCPConfigCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "mcp-config",
@@ -42,33 +43,62 @@ struct MCPConfigCommand: ParsableCommand {
             help: "Client to print the install command for: claude | codex | cursor | openclaw | opencode | hermes | pi. Omit for the generic JSON snippet.")
     var client: String?
 
+    @Flag(
+        name: .long,
+        help: "Print config for Claude Code's window-scoped screenshot compatibility mode registered as `emu-cua-computer-use`."
+    )
+    var claudeCodeComputerUseCompat: Bool = false
+
     func run() throws {
         let binary = resolvedBinaryPath()
+        let shellBinary = shellEscape(binary)
+        // Observed Claude Code behavior: the exact config key "computer-use"
+        // is reserved, so external stdio registrations use a distinct key.
+        let serverName = claudeCodeComputerUseCompat ? "emu-cua-computer-use" : "emu-cua-driver"
+        let args = claudeCodeComputerUseCompat
+            ? "[\"mcp\", \"--claude-code-computer-use-compat\"]"
+            : "[\"mcp\"]"
+        let commandArgs = claudeCodeComputerUseCompat
+            ? "mcp --claude-code-computer-use-compat"
+            : "mcp"
         switch client?.lowercased() {
         case nil, "":
-            print(genericMcpServersSnippet(binary: binary, includeType: false))
+            print(genericMcpServersSnippet(
+                serverName: serverName,
+                binary: binary,
+                args: args,
+                includeType: false
+            ))
         case "claude":
-            print("claude mcp add --transport stdio emu-cua-driver -- \(binary) mcp")
+            print("claude mcp add --transport stdio \(serverName) -- \(shellBinary) \(commandArgs)")
         case "codex":
-            print("codex mcp add emu-cua-driver -- \(binary) mcp")
+            print("codex mcp add \(serverName) -- \(shellBinary) \(commandArgs)")
         case "cursor":
             // Cursor has no CLI — emit JSON the user pastes into
             // ~/.cursor/mcp.json (global) or .cursor/mcp.json (project).
-            print(genericMcpServersSnippet(binary: binary, includeType: true))
+            print(genericMcpServersSnippet(
+                serverName: serverName,
+                binary: binary,
+                args: args,
+                includeType: true
+            ))
         case "openclaw":
             // OpenClaw has a CLI registry — set with a JSON arg.
-            print("openclaw mcp set emu-cua-driver '{\"command\":\"\(binary)\",\"args\":[\"mcp\"]}'")
+            print("openclaw mcp set \(serverName) '{\"command\":\"\(binary)\",\"args\":\(args)}'")
         case "opencode":
             // OpenCode (sst/opencode) uses opencode.json with type:"local"
             // and command as a single merged array.
+            let commandArray = claudeCodeComputerUseCompat
+                ? "[\"\(binary)\", \"mcp\", \"--claude-code-computer-use-compat\"]"
+                : "[\"\(binary)\", \"mcp\"]"
             let snippet = """
             // paste under "mcp" in opencode.json (or opencode.jsonc):
             {
               "$schema": "https://opencode.ai/config.json",
               "mcp": {
-                "emu-cua-driver": {
+                "\(serverName)": {
                   "type": "local",
-                  "command": ["\(binary)", "mcp"],
+                  "command": \(commandArray),
                   "enabled": true
                 }
               }
@@ -82,14 +112,14 @@ struct MCPConfigCommand: ParsableCommand {
             # paste under mcp_servers in ~/.hermes/config.yaml,
             # then run /reload-mcp inside Hermes:
             mcp_servers:
-              emu-cua-driver:
+              \(serverName):
                 command: "\(binary)"
-                args: ["mcp"]
+                args: \(args)
             """
             print(snippet)
         case "pi":
             // Pi (badlogic/pi-mono) intentionally rejects MCP. Skip MCP and
-            // point at the shell-tool path — Pi can shell-out to cua-driver
+            // point at the shell-tool path — Pi can shell-out to emu-cua-driver
             // directly the same way it would call any other CLI tool.
             print("""
             Pi (badlogic/pi-mono) does not support MCP natively — the author
@@ -116,14 +146,19 @@ struct MCPConfigCommand: ParsableCommand {
         }
     }
 
-    private func genericMcpServersSnippet(binary: String, includeType: Bool) -> String {
+    private func genericMcpServersSnippet(
+        serverName: String,
+        binary: String,
+        args: String,
+        includeType: Bool
+    ) -> String {
         let typeLine = includeType ? ",\n      \"type\": \"stdio\"" : ""
         return """
         {
           "mcpServers": {
-            "emu-cua-driver": {
+            "\(serverName)": {
               "command": "\(binary)",
-              "args": ["mcp"]\(typeLine)
+              "args": \(args)\(typeLine)
             }
           }
         }
@@ -139,14 +174,18 @@ struct MCPConfigCommand: ParsableCommand {
         }
         return CommandLine.arguments.first ?? "emu-cua-driver"
     }
+
+    private func shellEscape(_ value: String) -> String {
+        "'\(value.replacingOccurrences(of: "'", with: "'\"'\"'"))'"
+    }
 }
 
 /// Top-level entry point. Before handing to ArgumentParser, rewrite
 /// argv so unknown first positional args dispatch to `call`:
 ///
-///     cua-driver list_apps                   →  cua-driver call list_apps
-///     cua-driver launch_app '{...}'          →  cua-driver call launch_app '{...}'
-///     cua-driver get_window_state '{"pid":844,"window_id":1234}'
+///     emu-cua-driver list_apps                   →  emu-cua-driver call list_apps
+///     emu-cua-driver launch_app '{...}'          →  emu-cua-driver call launch_app '{...}'
+///     emu-cua-driver get_window_state '{"pid":844,"window_id":1234}'
 ///
 /// Known subcommands (`mcp`, `serve`, `stop`, `status`, `list-tools`,
 /// `describe`, `call`, `help`) and any flag-prefixed arg stay untouched.
@@ -173,6 +212,7 @@ struct CuaDriverEntryPoint {
         "update",
         "diagnose",
         "doctor",
+        "dump-docs",
         "help",
     ]
 
@@ -180,8 +220,9 @@ struct CuaDriverEntryPoint {
         let original = Array(CommandLine.arguments.dropFirst())
 
         // First-run installation ping. Fires at most once per install
-        // (guarded by a marker file under ~/.emu-cua-driver/) and honors
-        // the opt-out flag.
+        // (guarded by a marker file under ~/.emu-cua-driver/) and bypasses
+        // the opt-out check so we can count adoption. Every subsequent
+        // event honors the opt-out flag.
         TelemetryClient.shared.recordInstallation()
 
         // Per-entry-point event. Records which CLI surface (mcp /
@@ -266,9 +307,9 @@ struct CuaDriverEntryPoint {
 
     /// Map the (pre-rewrite) argv to a telemetry event name. No argv
     /// values are ever included — just the subcommand name. `call`
-    /// invocations report as `cua_driver_api_<tool>` so per-tool usage
+    /// invocations report as `emu_cua_driver_api_<tool>` so per-tool usage
     /// shows up in aggregate; everything else maps to a canonical
-    /// `cua_driver_<subcommand>` event.
+    /// `emu_cua_driver_<subcommand>` event.
     static func telemetryEntryEvent(for args: [String]) -> String {
         guard let first = args.first else {
             return TelemetryEvent.guiLaunch
@@ -277,7 +318,7 @@ struct CuaDriverEntryPoint {
         if first == "call", args.count >= 2 {
             return TelemetryEvent.apiPrefix + args[1]
         }
-        // Implicit-call form — `cua-driver list_apps` rewrites to
+        // Implicit-call form — `emu-cua-driver list_apps` rewrites to
         // `call list_apps` internally, so we check the same shape here
         // before fallback-mapping.
         if !first.hasPrefix("-") && !managementSubcommands.contains(first) {
@@ -285,7 +326,7 @@ struct CuaDriverEntryPoint {
         }
         switch first {
         case "mcp": return TelemetryEvent.mcp
-        case "mcp-config": return "cua_driver_mcp_config"
+        case "mcp-config": return "emu_cua_driver_mcp_config"
         case "serve": return TelemetryEvent.serve
         case "stop": return TelemetryEvent.stop
         case "status": return TelemetryEvent.status
@@ -303,6 +344,17 @@ struct MCPCommand: ParsableCommand {
         commandName: "mcp",
         abstract: "Run the stdio MCP server."
     )
+
+    @Flag(
+        name: .long,
+        help: """
+            Expose normal EmuCuaDriver tools, replacing only `screenshot` with a \
+            Claude Code-friendly window-only screenshot that establishes the \
+            vision coordinate frame. This does not use Anthropic's native \
+            computer_2025 API tool.
+            """
+    )
+    var claudeCodeComputerUseCompat: Bool = false
 
     func run() throws {
         // MCP stdio runs for the lifetime of the host process, so we
@@ -322,7 +374,7 @@ struct MCPCommand: ParsableCommand {
             if !granted {
                 FileHandle.standardError.write(
                     Data(
-                        "cua-driver: required permissions (Accessibility + Screen Recording) not granted; MCP server exiting.\n"
+                        "emu-cua-driver: required permissions (Accessibility + Screen Recording) not granted; MCP server exiting.\n"
                             .utf8))
                 throw AppKitBootstrapError.permissionsDenied
             }
@@ -339,7 +391,12 @@ struct MCPCommand: ParsableCommand {
                 AgentCursor.shared.apply(config: config.agentCursor)
             }
 
-            let server = await CuaDriverMCPServer.make()
+            let server = await CuaDriverMCPServer.make(
+                serverName: claudeCodeComputerUseCompat ? "computer-use" : "emu-cua-driver",
+                registry: claudeCodeComputerUseCompat
+                    ? .claudeCodeComputerUseCompat
+                    : .default
+            )
             let transport = StdioTransport()
             try await server.start(transport: transport)
             await server.waitUntilCompleted()
@@ -387,10 +444,10 @@ enum AppKitBootstrap {
                     try await work()
                 } catch AppKitBootstrapError.permissionsDenied {
                     // Already logged by the caller; skip the generic
-                    // "cua-driver: <error>" line to avoid duplicating.
+                    // "emu-cua-driver: <error>" line to avoid duplicating.
                 } catch {
                     FileHandle.standardError.write(
-                        Data("cua-driver: \(error)\n".utf8)
+                        Data("emu-cua-driver: \(error)\n".utf8)
                     )
                 }
                 await MainActor.run { NSApp.terminate(nil) }
@@ -401,11 +458,11 @@ enum AppKitBootstrap {
     }
 }
 
-/// `cua-driver update` — check for a newer release and optionally apply it.
+/// `emu-cua-driver update` — check for a newer release and optionally apply it.
 struct UpdateCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "update",
-        abstract: "Check for a newer cua-driver release and apply it."
+        abstract: "Check for a newer emu-cua-driver release and apply it."
     )
 
     @Flag(name: .long, help: "Download and apply the update without prompting.")
@@ -431,18 +488,18 @@ struct UpdateCommand: AsyncParsableCommand {
         if !apply {
             print("")
             print("Run with --apply to download and install it:")
-            print("  cua-driver update --apply")
+            print("  emu-cua-driver update --apply")
             print("")
             print("Or reinstall directly:")
-            print("  curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | bash")
+            print("  curl -fsSL https://raw.githubusercontent.com/Prathmesh234/emu-driver/main/scripts/install.sh | bash")
             return
         }
 
-        print("Downloading and installing cua-driver \(latest)…")
+        print("Downloading and installing emu-cua-driver \(latest)…")
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/bin/bash")
         proc.arguments = ["-c",
-            "curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | bash"]
+            "curl -fsSL https://raw.githubusercontent.com/Prathmesh234/emu-driver/main/scripts/install.sh | bash"]
         try proc.run()
         proc.waitUntilExit()
         if proc.terminationStatus != 0 {
@@ -452,12 +509,12 @@ struct UpdateCommand: AsyncParsableCommand {
     }
 }
 
-/// `cua-driver doctor` — clean up stale install bits left from older versions.
+/// `emu-cua-driver doctor` — clean up stale install bits left from older versions.
 ///
 /// v0.0.5 and earlier installed a weekly LaunchAgent at
-/// `~/Library/LaunchAgents/com.trycua.cua_driver_updater.plist` and a companion
-/// `/usr/local/bin/cua-driver-update` script. v0.0.6 dropped both in favor of
-/// the explicit `cua-driver update` command, but users who upgraded via the
+/// `~/Library/LaunchAgents/com.emu.cuadriver.updater.plist` and a companion
+/// `/usr/local/bin/emu-cua-driver-update` script. v0.0.6 dropped both in favor of
+/// the explicit `emu-cua-driver update` command, but users who upgraded via the
 /// legacy auto-updater path still have these dead files lingering.
 ///
 /// Removing the LaunchAgent stops the weekly cron from firing the stale
@@ -467,13 +524,13 @@ struct UpdateCommand: AsyncParsableCommand {
 struct DoctorCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "doctor",
-        abstract: "Clean up stale install bits left from older cua-driver versions."
+        abstract: "Clean up stale install bits left from older emu-cua-driver versions."
     )
 
     func run() throws {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let legacyPlist = "\(home)/Library/LaunchAgents/com.trycua.cua_driver_updater.plist"
-        let legacyScript = "/usr/local/bin/cua-driver-update"
+        let legacyPlist = "\(home)/Library/LaunchAgents/com.emu.cuadriver.updater.plist"
+        let legacyScript = "/usr/local/bin/emu-cua-driver-update"
 
         var removedCount = 0
         var manualSteps: [String] = []

@@ -1,4 +1,4 @@
-# cua-driver MCP Tool Output Format
+# emu-cua-driver MCP Tool Output Format
 
 Every tool call returns a ✅ checkmark + concise summary. No structured JSON output.
 

@@ -1,5 +1,5 @@
 // Zoom-on-click renderer. Reads a recording directory produced by
-// `cua-driver recording start … --video-experimental`, runs each video
+// `emu-cua-driver recording start … --video-experimental`, runs each video
 // frame through `FrameTransform.transformedFrame` with the scale/focus
 // curve from `ZoomRegionGenerator.sampleCurve`, and writes a new MP4.
 //

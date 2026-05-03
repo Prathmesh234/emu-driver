@@ -1,8 +1,8 @@
-# cua-driver — Claude Code skill
+# emu-cua-driver — Claude Code skill
 
 A [Claude Code](https://code.claude.com) skill that teaches Claude to
 drive native macOS apps via the
-[`cua-driver`](https://github.com/trycua/cua/tree/main/libs/cua-driver)
+[`emu-cua-driver`](https://github.com/trycua/cua/tree/main/libs/emu-cua-driver)
 CLI — snapshot an app's accessibility tree, click/type/scroll by
 `element_index`, and verify via re-snapshot. Backgrounded-first: no
 focus steal, no cursor warp, no Space follow.
@@ -28,23 +28,23 @@ See `SKILL.md` for the main body.
 
 1. **macOS 14 or newer** — the driver depends on SkyLight private SPIs
    that were stabilized in Sonoma.
-2. **`cua-driver` CLI + `CuaDriver.app`** — installable one-liner:
+2. **`emu-cua-driver` CLI + `EmuCuaDriver.app`** — installable one-liner:
    ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)"
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Prathmesh234/emu-driver/main/scripts/install.sh)"
    ```
-   Or from a clone of `trycua/cua`:
+   Or from a clone of `Prathmesh234/emu-driver`:
    ```bash
-   cd libs/cua-driver
+   cd emu-driver
    scripts/install-local.sh   # builds + installs + symlinks for dev use
    ```
    The driver runs as an `.app` bundle because macOS TCC grants are
-   tied to a stable bundle id (`com.trycua.driver`). The CLI symlink
+   tied to a stable bundle id (`com.emu.cuadriver`). The CLI symlink
    lets Claude invoke tools via plain shell.
-3. **TCC grants on `CuaDriver.app`** — **Accessibility** and
+3. **TCC grants on `EmuCuaDriver.app`** — **Accessibility** and
    **Screen Recording** in System Settings → Privacy & Security.
    Verify with:
    ```bash
-   cua-driver check_permissions
+   emu-cua-driver check_permissions
    ```
    Both fields must be `true`. If not, the app appears in the
    relevant panes of System Settings after first use; toggle it on
@@ -64,14 +64,14 @@ cp -R Skills/cua-driver ~/.claude/skills/
 Or symlink if you want edits-in-place:
 
 ```bash
-ln -s "$PWD/Skills/cua-driver" ~/.claude/skills/cua-driver
+ln -s "$PWD/Skills/cua-driver" ~/.claude/skills/emu-cua-driver
 ```
 
 **Project scope** (committed alongside a specific repo):
 
 ```bash
 mkdir -p .claude/skills
-cp -R /path/to/cua/libs/cua-driver/Skills/cua-driver .claude/skills/
+cp -R /path/to/cua/libs/emu-cua-driver/Skills/cua-driver .claude/skills/
 ```
 
 ## Invoking the skill
@@ -82,8 +82,20 @@ Save button in Numbers", "navigate to trycua.com in Chrome". You can
 also invoke it explicitly:
 
 ```
-/cua-driver
+/emu-cua-driver
 ```
+
+## Claude Code MCP compatibility mode
+
+For normal skill-driven use, prefer the CLI or the standard MCP server. If you want Claude Code's vision/computer-use-style flow to ground on EmuCuaDriver screenshots, register the compatibility server:
+
+```bash
+claude mcp add --transport stdio emu-cua-computer-use -- emu-cua-driver mcp --claude-code-computer-use-compat
+```
+
+This mode exposes the normal EmuCuaDriver tools and changes only `screenshot`. The compatibility screenshot requires `pid` and `window_id`, captures that window only, and establishes a window-local pixel coordinate frame. It does not call Anthropic APIs or expose Anthropic's native computer-use API tool.
+
+Use MCP for this Claude Code vision/computer-use-style path. CLI screenshots still work as EmuCuaDriver calls, but they do not expose the `mcp__emu-cua-computer-use__screenshot` tool name that Claude Code appears to use as the image-grounding cue.
 
 ## Files
 
@@ -96,15 +108,15 @@ also invoke it explicitly:
 
 ## Troubleshooting
 
-- `cua-driver: command not found` → re-run the installer or add
-  `.build/CuaDriver.app/Contents/MacOS/` to `$PATH`.
+- `emu-cua-driver: command not found` → re-run the installer or add
+  `.build/EmuCuaDriver.app/Contents/MacOS/` to `$PATH`.
 - `No cached AX state for pid X window_id W` → element_index was
   reused across turns, or across different windows of the same app.
   Call `get_window_state({pid, window_id})` first in the same turn,
   with the same window_id you're about to act against.
 - Empty `tree_markdown` → `capture_mode` is set to `vision`, which
   skips the AX walk by design. Flip back to the default `som`
-  (`cua-driver config set capture_mode som`) to get the tree.
+  (`emu-cua-driver config set capture_mode som`) to get the tree.
   Tiny screenshot → likely a stale window capture. See "Behavior
   matrix" in SKILL.md for the full mode table.
 - System-alert beep when pressing Return on a minimized Chrome
@@ -119,7 +131,7 @@ The skill evolves alongside the driver. To update:
 ```bash
 cd /path/to/cua && git pull
 # if you copied: re-copy
-cp -R libs/cua-driver/Skills/cua-driver ~/.claude/skills/
+cp -R libs/emu-cua-driver/Skills/cua-driver ~/.claude/skills/
 # if you symlinked: nothing needed
 ```
 

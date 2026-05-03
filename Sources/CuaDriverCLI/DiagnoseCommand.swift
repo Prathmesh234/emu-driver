@@ -168,8 +168,8 @@ struct DiagnoseCommand: AsyncParsableCommand {
             ("config dir",        "\(home)/Library/Application Support/EmuCuaDriver"),
             ("telemetry id",      "\(home)/.emu-cua-driver/.telemetry_id"),
             ("install marker",    "\(home)/.emu-cua-driver/.installation_recorded"),
-            ("updater plist",     "\(home)/Library/LaunchAgents/com.emu.cua_driver_updater.plist"),
-            ("daemon plist",      "\(home)/Library/LaunchAgents/com.emu.cua_driver_daemon.plist"),
+            ("updater plist",     "\(home)/Library/LaunchAgents/com.emu.cuadriver.updater.plist"),
+            ("daemon plist",      "\(home)/Library/LaunchAgents/com.emu.cuadriver.daemon.plist"),
         ]
         var lines: [String] = ["## config + state paths"]
         for (label, path) in paths {

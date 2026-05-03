@@ -4,7 +4,7 @@ import CuaDriverServer
 import Foundation
 import MCP
 
-/// `cua-driver config [get <key> | set <key> <value> | reset]` —
+/// `emu-cua-driver config [get <key> | set <key> <value> | reset]` —
 /// management interface for the persistent driver config at
 /// `~/Library/Application Support/<app-name>/config.json`.
 ///
@@ -18,23 +18,27 @@ import MCP
 ///
 /// Keys are dotted snake_case paths:
 ///   - `schema_version`
+///   - `capture_mode`
+///   - `max_image_dimension`
 ///   - `agent_cursor.enabled`
 ///   - `agent_cursor.motion.{start_handle,end_handle,arc_size,arc_flow,spring}`
 struct ConfigCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "config",
-        abstract: "Read and write persistent cua-driver settings.",
+        abstract: "Read and write persistent emu-cua-driver settings.",
         discussion: """
             Persistent config lives at
             `~/Library/Application Support/<app-name>/config.json` and
             survives daemon restarts.
 
             Examples:
-              cua-driver config                                    # print full config
-              cua-driver config get agent_cursor.enabled
-              cua-driver config set agent_cursor.enabled false
-              cua-driver config set agent_cursor.motion.arc_size 0.4
-              cua-driver config reset                              # overwrite with defaults
+              emu-cua-driver config                                    # print full config
+              emu-cua-driver config get capture_mode
+              emu-cua-driver config set capture_mode vision
+              emu-cua-driver config get agent_cursor.enabled
+              emu-cua-driver config set agent_cursor.enabled false
+              emu-cua-driver config set agent_cursor.motion.arc_size 0.4
+              emu-cua-driver config reset                              # overwrite with defaults
             """,
         subcommands: [
             ConfigShowCommand.self,
@@ -48,7 +52,7 @@ struct ConfigCommand: AsyncParsableCommand {
     )
 }
 
-/// `cua-driver config telemetry {status|enable|disable}` — dedicated
+/// `emu-cua-driver config telemetry {status|enable|disable}` — dedicated
 /// wrapper around the `telemetry_enabled` config key for discoverability.
 /// Equivalent to `config set telemetry_enabled {true|false}` but with
 /// friendlier output and an explicit env-override callout on `status`.
@@ -82,7 +86,7 @@ struct ConfigTelemetryStatusCommand: ParsableCommand {
             }
         }
         print("")
-        print("Telemetry collects anonymous usage data to help improve Cua Driver.")
+        print("Telemetry collects anonymous usage data to help improve EmuCuaDriver.")
         print("No personal information, file paths, or command arguments are collected.")
     }
 }
@@ -96,7 +100,7 @@ struct ConfigTelemetryEnableCommand: ParsableCommand {
     func run() throws {
         try ConfigStore.setTelemetryEnabledSync(true)
         print("Telemetry enabled")
-        print("Thank you for helping improve Cua Driver!")
+        print("Thank you for helping improve EmuCuaDriver!")
     }
 }
 
@@ -112,8 +116,8 @@ struct ConfigTelemetryDisableCommand: ParsableCommand {
     }
 }
 
-/// `cua-driver config show` — print the full current config as
-/// pretty-printed JSON. Also the default action when `cua-driver config`
+/// `emu-cua-driver config show` — print the full current config as
+/// pretty-printed JSON. Also the default action when `emu-cua-driver config`
 /// is invoked with no subcommand.
 struct ConfigShowCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -127,7 +131,7 @@ struct ConfigShowCommand: AsyncParsableCommand {
     }
 }
 
-/// `cua-driver config get <key>` — print a single value from the
+/// `emu-cua-driver config get <key>` — print a single value from the
 /// current config. Exits 64 (usage) on unknown keys. Accepts dotted
 /// snake_case paths (`agent_cursor.motion.arc_size`), same keyset as
 /// `config set`.
@@ -147,6 +151,10 @@ struct ConfigGetCommand: AsyncParsableCommand {
         switch key {
         case "schema_version":
             print(config.schemaVersion)
+        case "capture_mode":
+            print(config.captureMode.rawValue)
+        case "max_image_dimension":
+            print(config.maxImageDimension)
         case "agent_cursor.enabled":
             print(config.agentCursor.enabled)
         case "agent_cursor.motion.start_handle":
@@ -166,7 +174,7 @@ struct ConfigGetCommand: AsyncParsableCommand {
     }
 }
 
-/// `cua-driver config set <key> <value>` — write a single value. When
+/// `emu-cua-driver config set <key> <value>` — write a single value. When
 /// a daemon is running on the default socket, forwards to `set_config`
 /// so the live process observes the update immediately. Otherwise
 /// writes directly through the shared `ConfigStore`.
@@ -275,7 +283,7 @@ struct ConfigSetCommand: AsyncParsableCommand {
     }
 }
 
-/// `cua-driver config reset` — overwrite the on-disk config with
+/// `emu-cua-driver config reset` — overwrite the on-disk config with
 /// defaults. Intentional, explicit wipe; doesn't delete the file so
 /// `cat config.json` still shows the current baseline afterwards.
 struct ConfigResetCommand: AsyncParsableCommand {
@@ -313,7 +321,7 @@ private func printConfigJSON(_ config: CuaDriverConfig) throws {
 /// (so `--value 42` becomes `.int(42)`, `--value true` becomes
 /// `.bool(true)`, `--value '"foo"'` becomes `.string("foo")`). Falls
 /// back to treating the raw arg as a string when JSON decode fails —
-/// the common case is `cua-driver config set capture_mode window`, and
+/// the common case is `emu-cua-driver config set capture_mode window`, and
 /// we don't want users to wrap unquoted strings in extra quotes.
 private func parseValueArgument(_ raw: String) throws -> Value {
     let data = Data(raw.utf8)
@@ -336,7 +344,7 @@ private func printErr(_ text: String) {
     FileHandle.standardError.write(Data((text + "\n").utf8))
 }
 
-/// `cua-driver config updates {status|enable|disable}` — dedicated
+/// `emu-cua-driver config updates {status|enable|disable}` — dedicated
 /// wrapper around the `auto_update_enabled` config key for discoverability.
 /// Equivalent to `config set auto_update_enabled {true|false}` but with
 /// friendlier output and an explicit env-override callout on `status`.
@@ -370,7 +378,7 @@ struct ConfigUpdatesStatusCommand: ParsableCommand {
             }
         }
         print("")
-        print("When enabled, cua-driver automatically checks for updates periodically")
+        print("When enabled, emu-cua-driver automatically checks for updates periodically")
         print("and can download and install new versions without user interaction.")
     }
 }
@@ -400,7 +408,7 @@ struct ConfigUpdatesDisableCommand: ParsableCommand {
         print("The LaunchAgent will be removed from your system.")
         
         // Remove the LaunchAgent
-        let plistPath = "\(NSHomeDirectory())/Library/LaunchAgents/com.trycua.cua_driver_updater.plist"
+        let plistPath = "\(NSHomeDirectory())/Library/LaunchAgents/com.emu.cuadriver.updater.plist"
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: plistPath) {
             do {

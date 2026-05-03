@@ -57,7 +57,7 @@ public struct AgentCursorView: View {
 
         let style = renderer.style
         let bloomColor = Color(nsColor: style.bloomColor)
-        let bloomR: CGFloat = max(20, style.shapeSize * 1.3)
+        let bloomR = max(style.shapeSize * 0.9, 9)
         let bloomRect = CGRect(x: p.x - bloomR, y: p.y - bloomR,
                                width: bloomR * 2, height: bloomR * 2)
 
@@ -88,13 +88,16 @@ public struct AgentCursorView: View {
                         in: CGRect(x: -s / 2, y: -s / 2, width: s, height: s))
         } else {
             // Procedural arrow mode: 4-vertex pointer shape with gradient fill.
-            let baseSize: CGFloat = 22
-            let scale = max(0.1, style.shapeSize / baseSize)
+            let scale = style.shapeSize / 22.0
+            let tipX: CGFloat = 14 * scale
+            let tailX: CGFloat = -8 * scale
+            let notchX: CGFloat = -3 * scale
+            let halfHeight: CGFloat = 9 * scale
             var shape = Path()
-            shape.move(to: CGPoint(x: 14 * scale, y: 0))
-            shape.addLine(to: CGPoint(x: -8 * scale, y: -9 * scale))
-            shape.addLine(to: CGPoint(x: -3 * scale, y: 0))
-            shape.addLine(to: CGPoint(x: -8 * scale, y: 9 * scale))
+            shape.move(to: CGPoint(x: tipX, y: 0))
+            shape.addLine(to: CGPoint(x: tailX, y: -halfHeight))
+            shape.addLine(to: CGPoint(x: notchX, y: 0))
+            shape.addLine(to: CGPoint(x: tailX, y: halfHeight))
             shape.closeSubpath()
 
             let transform = CGAffineTransform(translationX: p.x, y: p.y)
@@ -109,8 +112,8 @@ public struct AgentCursorView: View {
                 transformed,
                 with: .linearGradient(
                     Gradient(colors: gradientColors),
-                    startPoint: CGPoint(x: p.x + 14 * scale, y: p.y - 9 * scale),
-                    endPoint: CGPoint(x: p.x - 8 * scale, y: p.y + 9 * scale)
+                    startPoint: CGPoint(x: p.x + tipX, y: p.y - halfHeight),
+                    endPoint: CGPoint(x: p.x + tailX, y: p.y + halfHeight)
                 )
             )
             ctx.stroke(transformed, with: .color(.white), lineWidth: style.strokeWidth)

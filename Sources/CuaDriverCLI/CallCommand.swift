@@ -1,3 +1,4 @@
+import AppKit
 import ArgumentParser
 import CuaDriverServer
 import Foundation
@@ -26,11 +27,11 @@ struct JSONOutputOptions: ParsableArguments {
 }
 
 /// Shared flag block controlling whether the CLI forwards to a running
-/// `cua-driver serve` daemon when one is reachable on the socket. Every
+/// `emu-cua-driver serve` daemon when one is reachable on the socket. Every
 /// stateful CLI op (call/list-tools/describe) picks up these flags so
 /// users can force in-process behavior for debugging.
 struct DaemonForwardingOptions: ParsableArguments {
-    @Flag(name: .long, help: "Skip the cua-driver daemon even if one is running.")
+    @Flag(name: .long, help: "Skip the emu-cua-driver daemon even if one is running.")
     var noDaemon: Bool = false
 
     @Option(name: .long, help: "Override the daemon Unix socket path.")
@@ -61,13 +62,13 @@ struct CallCommand: AsyncParsableCommand {
             provided, the tool is called with no arguments.
 
             Examples:
-              cua-driver call list_apps
-              cua-driver call launch_app '{"bundle_id":"com.apple.finder"}'
-              echo '{"pid":844,"window_id":1234}' | cua-driver call get_window_state
+              emu-cua-driver call list_apps
+              emu-cua-driver call launch_app '{"bundle_id":"com.apple.finder"}'
+              echo '{"pid":844,"window_id":1234}' | emu-cua-driver call get_window_state
             """
     )
 
-    @Argument(help: "Name of the tool to invoke (see `cua-driver list-tools`).")
+    @Argument(help: "Name of the tool to invoke (see `emu-cua-driver list-tools`).")
     var toolName: String
 
     @Argument(help: "JSON object string for the tool's inputSchema. If omitted, reads from stdin when stdin is a pipe.")
@@ -171,6 +172,7 @@ struct CallCommand: AsyncParsableCommand {
 
         let result: CallTool.Result
         do {
+            await bootstrapAppKitForInProcessCallIfNeeded(toolName: toolName)
             // Route through `registry.call(...)` so the recording hook
             // (and any future cross-cutting wrapper) fires consistently
             // with the MCP and daemon paths. The in-process one-shot
@@ -264,10 +266,39 @@ struct CallCommand: AsyncParsableCommand {
     }
 }
 
+private func bootstrapAppKitForInProcessCallIfNeeded(toolName: String) async {
+    let appKitBackedTools: Set<String> = [
+        "check_permissions",
+        "click",
+        "double_click",
+        "drag",
+        "get_accessibility_tree",
+        "get_cursor_position",
+        "get_window_state",
+        "hotkey",
+        "launch_app",
+        "list_apps",
+        "list_windows",
+        "move_cursor",
+        "press_key",
+        "right_click",
+        "screenshot",
+        "scroll",
+        "set_value",
+        "type_text",
+        "type_text_chars",
+        "zoom",
+    ]
+    guard appKitBackedTools.contains(toolName) else { return }
+    await MainActor.run {
+        _ = NSApplication.shared.setActivationPolicy(.accessory)
+    }
+}
+
 struct ListToolsCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "list-tools",
-        abstract: "List every tool exposed by cua-driver with its one-line description."
+        abstract: "List every tool exposed by emu-cua-driver with its one-line description."
     )
 
     @OptionGroup var daemon: DaemonForwardingOptions

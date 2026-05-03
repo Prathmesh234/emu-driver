@@ -47,7 +47,7 @@ public final class AgentCursorOverlayWindow: NSWindow {
             .canJoinAllSpaces, .fullScreenAuxiliary, .stationary,
         ]
         isReleasedWhenClosed = false
-        // The overlay must stay visible even when `cua-driver` itself
+        // The overlay must stay visible even when `emu-cua-driver` itself
         // isn't the active application. Without this, the window would
         // disappear any time the driver loses focus (which is every
         // tool call, given our no-focus-steal contract).

@@ -126,13 +126,13 @@ fi
 # --- Remove stale dev-install paths -------------------------------------
 #
 # Older revisions of this script (and ad-hoc `install-cli.sh`, since
-# removed) installed to `~/Applications/CuaDriver.app`. That leaks a
+# removed) installed to `~/Applications/EmuCuaDriver.app`. That leaks a
 # second bundle that LaunchServices keys off
-# `CFBundleIdentifier=com.trycua.driver`, which can silently re-route
-# upstream `cua-driver serve` to the stale `~/Applications` copy.
+# `CFBundleIdentifier=com.emu.cuadriver`, which can silently re-route
+# `emu-cua-driver serve` to the stale `~/Applications` copy.
 # Proactively remove them here so there is exactly one registered
-# CuaDriver.app on the machine after every install.
-STALE_APP="$HOME/Applications/CuaDriver.app"
+# EmuCuaDriver.app on the machine after every install.
+STALE_APP="$HOME/Applications/EmuCuaDriver.app"
 for stale in "$STALE_APP"; do
     if [ -e "$stale" ] || [ -L "$stale" ]; then
         echo "Removing stale dev-install leftover: $stale"
@@ -170,7 +170,7 @@ echo "${GREEN}Linked $BIN_LINK → $APP_DEST/Contents/MacOS/emu-cua-driver${NORM
 if [ "$INSTALL_DAEMON" = true ]; then
     echo ""
     echo "${BOLD}Installing LaunchAgent (emu-cua-driver serve)...${NORMAL}"
-    SERVICE_NAME="com.emu.cua_driver_daemon"
+    SERVICE_NAME="com.emu.cuadriver.daemon"
     PLIST_PATH="$HOME/Library/LaunchAgents/$SERVICE_NAME.plist"
 
     mkdir -p "$HOME/Library/LaunchAgents"
@@ -210,7 +210,7 @@ EOF
 else
     # Tear down any stale LaunchAgent from a prior run so two daemons
     # don't race on the default socket.
-    SERVICE_NAME="com.emu.cua_driver_daemon"
+    SERVICE_NAME="com.emu.cuadriver.daemon"
     PLIST_PATH="$HOME/Library/LaunchAgents/$SERVICE_NAME.plist"
     if [ -f "$PLIST_PATH" ]; then
         echo ""
@@ -232,6 +232,10 @@ Next steps:
   2. Verify the CLI:  $BIN_LINK --version
   3. Wire into an MCP client:
      $BIN_LINK mcp-config | pbcopy
+     Claude Code compatibility:
+       $BIN_LINK mcp-config --client claude --claude-code-computer-use-compat
+     Use MCP for Claude Code vision/computer-use-style flows; CLI screenshots
+     do not expose the mcp__emu-cua-computer-use__screenshot tool name cue.
 
 Uninstall:  $CUA_DRIVER_DIR/scripts/uninstall.sh
 

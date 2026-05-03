@@ -3,7 +3,7 @@
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Navigate to the cua-driver root directory (two levels up from scripts/build/)
+# Navigate to the emu-cua-driver root directory (two levels up from scripts/build/)
 CUA_DRIVER_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Set default log level if not provided

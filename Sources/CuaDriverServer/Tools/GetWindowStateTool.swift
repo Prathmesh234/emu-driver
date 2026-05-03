@@ -13,7 +13,7 @@ public enum GetWindowStateTool {
             description: """
                 Walk a running app's AX tree and return a Markdown rendering of its
                 UI, tagging every actionable element with [element_index N]. Pass
-                those indices to `click`, `type_text`, `scroll`, etc. — those
+                those indices to `click`, `type_text_in`, `scroll_in`, etc. — those
                 tools resolve the index to the cached AXUIElement on the server.
 
                 INVARIANT: call `get_window_state` once per turn per (pid, window_id)
@@ -71,7 +71,7 @@ public enum GetWindowStateTool {
                   - `ax`     — walks AX tree; screen-capture call is
                                skipped entirely (no Screen Recording
                                hit). `screenshot_*` fields omitted.
-                Change with `cua-driver config set capture_mode <mode>` or
+                Change with `emu-cua-driver config set capture_mode <mode>` or
                 the `set_config` tool.
 
                 Requires Accessibility and Screen Recording permissions.
@@ -175,7 +175,7 @@ public enum GetWindowStateTool {
             }
 
             // Re-read the persisted capture_mode on every invocation so a
-            // `cua-driver config set capture_mode …` in-flight takes effect
+            // `emu-cua-driver config set capture_mode …` in-flight takes effect
             // without a daemon bounce — the config store's load path is
             // cheap (single JSON decode of a tiny file, or fall-through to
             // the cached default when the file is absent).

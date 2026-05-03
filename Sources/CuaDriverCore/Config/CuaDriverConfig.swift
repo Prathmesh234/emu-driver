@@ -1,6 +1,6 @@
 import Foundation
 
-/// Persistent, on-disk configuration for the cua-driver daemon. Stored as
+/// Persistent, on-disk configuration for the emu-cua-driver daemon. Stored as
 /// JSON at `~/Library/Application Support/<app-name>/config.json` so
 /// settings survive daemon restarts, unlike the session-scoped
 /// `RecordingSession` / live `AgentCursor` state.
@@ -41,7 +41,7 @@ public struct CuaDriverConfig: Codable, Sendable, Equatable {
 
     /// Automatic update opt-out. Default `true` (auto-update enabled).
     /// Override at run time via `CUA_DRIVER_AUTO_UPDATE_ENABLED={0|1}`
-    /// or mutate persistently via `cua-driver config updates {enable|disable}`.
+    /// or mutate persistently via `emu-cua-driver config updates {enable|disable}`.
     public var autoUpdateEnabled: Bool
 
     /// The default long-side cap applied when a config is absent OR

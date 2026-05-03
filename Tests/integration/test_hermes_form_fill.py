@@ -3,7 +3,7 @@
 Goal
 ----
 One test per HTML input type. Each test asks hermes to interact with exactly
-ONE element in a Safari window that is NOT frontmost — verifying that cua-driver
+ONE element in a Safari window that is NOT frontmost — verifying that emu-cua-driver
 can synthesise events without stealing keyboard/mouse focus from the foreground app
 (FocusMonitorApp).
 

@@ -86,10 +86,10 @@ struct ServeCommand: ParsableCommand {
             }
             FileHandle.standardError.write(
                 Data(
-                         "emu-cua-driver daemon is already running on \(socketPath)\(pidHint). "
+                    "emu-cua-driver daemon is already running on \(socketPath)\(pidHint). "
                         .utf8))
             FileHandle.standardError.write(
-            Data("Run `emu-cua-driver stop` first.\n".utf8))
+                Data("Run `emu-cua-driver stop` first.\n".utf8))
             throw ExitCode(1)
         }
 
@@ -208,11 +208,11 @@ extension ServeCommand {
         // directly (the symlink-less path, also fine to leave alone).
         if Bundle.main.bundlePath.hasSuffix(".app") { return false }
         // Otherwise: we're running from some bare path. Only relaunch
-        // if that bare path actually resolves into an EmuCuaDriver.app
+        // if that bare path actually resolves into a EmuCuaDriver.app
         // bundle on disk — the symlink case. Raw `swift run` dev
         // invocations resolve into `.build/<config>/emu-cua-driver`
         // instead, and have no bundle to relaunch into.
-        guard resolvedExecutableIsInsideEmuCuaDriverApp() else { return false }
+        guard resolvedExecutableIsInsideCuaDriverApp() else { return false }
         // ppid == 1 means we're already a LaunchServices-spawned process
         // (or orphaned into init, in which case relaunching wouldn't
         // change anything useful anyway).
@@ -317,7 +317,7 @@ extension ServeCommand {
     ///
     /// Returns false for `swift run` / raw `.build/<config>/emu-cua-driver`
     /// dev invocations, which have no installed bundle to relaunch into.
-    private func resolvedExecutableIsInsideEmuCuaDriverApp() -> Bool {
+    private func resolvedExecutableIsInsideCuaDriverApp() -> Bool {
         // Prefer Foundation's executablePath (stable, absolute).
         // Fall back to argv[0] when unset, which realpath() still
         // resolves via $PATH lookup at the shell level — good enough
@@ -343,7 +343,7 @@ extension ServeCommand {
 
 /// Open (or create) the shared lock file and acquire a non-blocking
 /// exclusive flock. On contention, emits a helpful error pointing the
-    /// user at `emu-cua-driver status` / `emu-cua-driver stop` and throws
+/// user at `emu-cua-driver status` / `emu-cua-driver stop` and throws
 /// `ExitCode(1)`. Returns the held fd; callers must keep it alive for
 /// as long as the lock should persist — the kernel releases flocks
 /// when the owning fd is closed (including by process exit).
@@ -359,7 +359,7 @@ private func acquireDaemonLockOrExit() throws -> Int32 {
     guard fd >= 0 else {
         FileHandle.standardError.write(
             Data(
-                "cua-driver: failed to open lock file \(lockPath): \(String(cString: strerror(errno)))\n"
+                "emu-cua-driver: failed to open lock file \(lockPath): \(String(cString: strerror(errno)))\n"
                     .utf8))
         throw ExitCode(1)
     }
@@ -372,10 +372,10 @@ private func acquireDaemonLockOrExit() throws -> Int32 {
         if err == EWOULDBLOCK {
             FileHandle.standardError.write(
                 Data(
-                    "cua-driver: another daemon is starting or running (lock held on \(lockPath)). "
+                    "emu-cua-driver: another daemon is starting or running (lock held on \(lockPath)). "
                         .utf8))
             FileHandle.standardError.write(
-                Data("Run `cua-driver status` to check.\n".utf8))
+                Data("Run `emu-cua-driver status` to check.\n".utf8))
         } else {
             FileHandle.standardError.write(
                 Data(
@@ -448,7 +448,7 @@ struct StopCommand: AsyncParsableCommand {
 struct StatusCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "status",
-        abstract: "Report whether an emu-cua-driver daemon is running."
+        abstract: "Report whether a emu-cua-driver daemon is running."
     )
 
     @Option(name: .long, help: "Override the Unix socket path.")

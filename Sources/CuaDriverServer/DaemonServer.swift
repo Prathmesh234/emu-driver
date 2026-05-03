@@ -2,13 +2,13 @@ import Darwin
 import Foundation
 import MCP
 
-/// Long-running daemon that accepts `cua-driver call`/`list-tools`/`describe`
+/// Long-running daemon that accepts `emu-cua-driver call`/`list-tools`/`describe`
 /// requests over a Unix domain socket and dispatches them against a single
 /// shared `ToolRegistry`. Because `AppStateRegistry` is module-level state,
 /// every connected client sees the same AppStateEngine / FocusGuard /
 /// SystemFocusStealPreventer — which is the whole point. A one-shot
-/// `cua-driver call get_window_state` followed by a one-shot
-/// `cua-driver call click` would otherwise hit "No cached state for pid X"
+/// `emu-cua-driver call get_window_state` followed by a one-shot
+/// `emu-cua-driver call click` would otherwise hit "No cached state for pid X"
 /// because the AppStateEngine dies with the short-lived CLI process.
 public actor DaemonServer {
     public let socketPath: String

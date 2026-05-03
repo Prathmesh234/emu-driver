@@ -227,7 +227,7 @@ public enum RightClickTool {
 
     /// Build the error message surfaced when the element-index cache
     /// misses. If no daemon is listening on the UDS the caller is
-    /// running `cua-driver right_click` in-process, which starts
+    /// running `emu-cua-driver right_click` in-process, which starts
     /// with an empty cache. Prepend a hint to start the daemon first
     /// since the default description assumes the cache is live and
     /// just needs a `get_window_state` refresh. Mirrors

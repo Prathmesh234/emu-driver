@@ -1,8 +1,8 @@
-"""Minimal MCP stdio client used by cua-driver integration tests.
+"""Minimal MCP stdio client used by emu-cua-driver integration tests.
 
 Speaks JSON-RPC 2.0 line-framed over stdin/stdout. Keeps request IDs monotonic
 and strips notifications from the response stream. Deliberately tiny — we want
-the test failures to point at cua-driver, not at a heavy client dependency.
+the test failures to point at emu-cua-driver, not at a heavy client dependency.
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ class DriverClient:
             {
                 "protocolVersion": "2025-06-18",
                 "capabilities": {},
-                "clientInfo": {"name": "cua-driver-integration", "version": "0.0.1"},
+                "clientInfo": {"name": "emu-cua-driver-integration", "version": "0.0.1"},
             },
         )
         self._notify("notifications/initialized")

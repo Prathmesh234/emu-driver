@@ -18,18 +18,17 @@ public enum SetAgentCursorStyleTool {
                 - gradient_colors: Array of CSS hex strings (#RRGGBB or
                   #RGB) defining the arrow fill gradient from tip to tail.
                   E.g. ["#FF6B6B", "#FF8E53"] for a red-orange arrow.
-                - bloom_color: CSS hex string for the glow halo and the
-                  focus-rect highlight drawn around clicked elements.
-                - shape_size: Drawn cursor size in points. Smaller values
-                  make the cursor less visually dominant.
-                - image_path: Absolute or ~-rooted path to a PNG, JPEG,
-                  PDF, or SVG file. When set, replaces the default arrow
+                 - bloom_color: CSS hex string for the glow halo and the
+                   focus-rect highlight drawn around clicked elements.
+                 - shape_size: Drawn cursor size in points (10-40).
+                 - image_path: Absolute or ~-rooted path to a PNG, JPEG,
+                   PDF, or SVG file. When set, replaces the default arrow
                   with this image (drawn at shapeSize × shapeSize points,
                   rotated to match the motion heading). Set to "" (empty
                   string) to revert to the procedural arrow.
 
                 Example — brand-colored arrow:
-                  {"gradient_colors": ["#A855F7", "#6366F1"], "bloom_color": "#A855F7", "shape_size": 18}
+                  {"gradient_colors": ["#A855F7", "#6366F1"], "bloom_color": "#A855F7"}
 
                 Example — custom PNG cursor:
                   {"image_path": "~/cursors/my-cursor.png"}
@@ -45,19 +44,19 @@ public enum SetAgentCursorStyleTool {
                         "items": ["type": "string"],
                         "description": "CSS hex color strings for gradient stops (tip to tail). Empty array reverts to default.",
                     ],
-                     "bloom_color": [
-                         "type": "string",
-                         "description": "CSS hex color for the bloom halo and focus rect. Empty string reverts to default.",
-                     ],
-                     "shape_size": [
-                         "type": "number",
-                         "minimum": 10,
-                         "maximum": 40,
-                         "description": "Drawn cursor size in points. Omit to keep current size.",
-                     ],
-                     "image_path": [
-                         "type": "string",
-                         "description": "Path to PNG/JPEG/PDF/SVG cursor image. Empty string reverts to arrow.",
+                    "bloom_color": [
+                        "type": "string",
+                        "description": "CSS hex color for the bloom halo and focus rect. Empty string reverts to default.",
+                    ],
+                    "shape_size": [
+                        "type": "number",
+                        "minimum": 10,
+                        "maximum": 40,
+                        "description": "Drawn cursor size in points. Default 14.",
+                    ],
+                    "image_path": [
+                        "type": "string",
+                        "description": "Path to PNG/JPEG/PDF/SVG cursor image. Empty string reverts to arrow.",
                     ],
                 ],
                 "additionalProperties": false,
@@ -70,13 +69,12 @@ public enum SetAgentCursorStyleTool {
             )
         ),
         invoke: { arguments in
+            // Read current persisted style; we'll mutate only the supplied fields.
+            var styleConfig = await ConfigStore.shared.load().agentCursor.style
             func number(_ value: Value?) -> Double? {
                 if let i = value?.intValue { return Double(i) }
                 return value?.doubleValue
             }
-
-            // Read current persisted style; we'll mutate only the supplied fields.
-            var styleConfig = await ConfigStore.shared.load().agentCursor.style
 
             if let colors = arguments?["gradient_colors"]?.arrayValue {
                 let hexes = colors.compactMap { $0.stringValue }
@@ -88,7 +86,7 @@ public enum SetAgentCursorStyleTool {
             }
 
             if let shapeSize = number(arguments?["shape_size"]) {
-                styleConfig.shapeSize = min(40, max(10, shapeSize))
+                styleConfig.shapeSize = min(max(shapeSize, 10), 40)
             }
 
             if let pathStr = arguments?["image_path"]?.stringValue {

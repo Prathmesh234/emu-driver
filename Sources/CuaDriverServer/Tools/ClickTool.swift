@@ -393,7 +393,7 @@ public enum ClickTool {
 
     /// Build the error message surfaced when `lookup(pid:windowId:elementIndex:)`
     /// misses. If no daemon is listening on the UDS the caller almost
-    /// certainly ran `cua-driver click` in-process, which starts with
+    /// certainly ran `emu-cua-driver click` in-process, which starts with
     /// an empty `AppStateRegistry.engine` cache — prepend a hint to
     /// start the daemon before calling element-indexed actions, since
     /// the default `AppStateError.noCachedState` description assumes

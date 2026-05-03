@@ -1,6 +1,6 @@
 """Integration test: agent-cursor overlay z-ordering.
 
-Verifies that after driving a backgrounded window the cua-driver overlay
+Verifies that after driving a backgrounded window the emu-cua-driver overlay
 is z-ordered JUST ABOVE the target window (NSWindowLevel.normal + ordered
 above target) rather than at NSWindowLevel.floating (above ALL normal windows).
 
@@ -148,7 +148,7 @@ class TestOverlayZOrder(unittest.TestCase):
         overlay_wins = [w for w in all_after if w["pid"] == driver_pid]
         self.assertTrue(
             overlay_wins,
-            f"cua-driver overlay NOT visible in list_windows at layer=0 "
+            f"emu-cua-driver overlay NOT visible in list_windows at layer=0 "
             f"(driver pid={driver_pid}). "
             f"Expected NSWindowLevel.normal overlay to appear as a layer-0 window. "
             f"If level is still .floating (layer 3) it would be filtered out here.",

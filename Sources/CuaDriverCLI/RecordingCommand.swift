@@ -122,7 +122,7 @@ struct RecordingStartCommand: AsyncParsableCommand {
     }
 }
 
-/// `cua-driver recording stop` — disables the recorder. Prints the
+/// `emu-cua-driver recording stop` — disables the recorder. Prints the
 /// last-recorded turn count and the directory it was writing into
 /// when available (so the user knows where to look).
 struct RecordingStopCommand: AsyncParsableCommand {

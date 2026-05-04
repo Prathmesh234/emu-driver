@@ -127,17 +127,25 @@ class MCPCallError(RuntimeError):
 
 
 def default_binary_path() -> str:
-    return os.environ.get(
-        "CUA_DRIVER_BINARY",
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "..",
-            "..",
-            ".build",
-            "debug",
-            "emu-cua-driver",
-        ),
-    )
+    """Return the emu-cua-driver binary path.
+
+    Resolution order:
+      1. CUA_DRIVER_BINARY env var (CI / explicit override)
+      2. .build/EmuCuaDriver.app/Contents/MacOS/emu-cua-driver  (release .app bundle)
+      3. .build/release/emu-cua-driver                          (plain release binary)
+      4. .build/debug/emu-cua-driver                            (debug build fallback)
+    """
+    if env := os.environ.get("CUA_DRIVER_BINARY"):
+        return env
+    _root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+    for candidate in (
+        os.path.join(_root, ".build", "EmuCuaDriver.app", "Contents", "MacOS", "emu-cua-driver"),
+        os.path.join(_root, ".build", "release", "emu-cua-driver"),
+        os.path.join(_root, ".build", "debug", "emu-cua-driver"),
+    ):
+        if os.path.isfile(candidate):
+            return candidate
+    return os.path.join(_root, ".build", "release", "emu-cua-driver")
 
 
 def reset_calculator(settle_s: float = 0.3) -> None:

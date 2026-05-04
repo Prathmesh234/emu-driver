@@ -40,7 +40,7 @@ public struct AgentCursorStyle: @unchecked Sendable {
     /// Container layer size (points). Default 44.
     public let containerSize: CGFloat
 
-    /// Drawn size of the cursor shape (points). Default 14.
+    /// Drawn size of the cursor shape (points). Default 13.
     public let shapeSize: CGFloat
 
     /// Axial stroke gradient stops for the procedural arrow. Ignored when
@@ -70,15 +70,15 @@ public struct AgentCursorStyle: @unchecked Sendable {
 
     public init(
         containerSize: CGFloat = 44,
-        shapeSize: CGFloat = 14,
+        shapeSize: CGFloat = 13,
         strokeGradientStops: [AgentCursorGradientStop] = AgentCursorStyle.defaultGradientStops,
         strokeGradientAngleDegrees: CGFloat = 135,
-        strokeWidth: CGFloat = 1.4,
+        strokeWidth: CGFloat = 2.0,
         highlightStrokeWidth: CGFloat = 0.5,
-        bloomColor: NSColor = NSColor(red: 0x5E / 255, green: 0xC0 / 255, blue: 0xE8 / 255, alpha: 1),
-        bloomCenterAlpha: CGFloat = 0.38,
-        bloomMidAlpha: CGFloat = 0.10,
-        bloomBreathPeak: CGFloat = 0.45,
+        bloomColor: NSColor = .white,
+        bloomCenterAlpha: CGFloat = 0.30,
+        bloomMidAlpha: CGFloat = 0.12,
+        bloomBreathPeak: CGFloat = 0.38,
         image: NSImage? = nil
     ) {
         self.containerSize = containerSize
@@ -326,7 +326,7 @@ public final class AgentCursor {
             gradientStops = AgentCursorStyle.defaultGradientStops
         }
         let bloomColor = styleConfig.bloomColor.flatMap { NSColor(hex: $0) }
-            ?? NSColor(red: 0x5E / 255, green: 0xC0 / 255, blue: 0xE8 / 255, alpha: 1)
+            ?? AgentCursorStyle.default.bloomColor
         let shapeSize = styleConfig.shapeSize.map {
             min(max(CGFloat($0), 10), 40)
         } ?? AgentCursorStyle.default.shapeSize

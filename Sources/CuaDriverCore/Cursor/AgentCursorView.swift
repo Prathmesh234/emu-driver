@@ -104,6 +104,9 @@ public struct AgentCursorView: View {
                 .rotated(by: CGFloat(renderer.heading + .pi))
             let transformed = shape.applying(transform)
 
+            ctx.stroke(transformed, with: .color(bloomColor.opacity(0.24)), lineWidth: style.strokeWidth + 3.4)
+            ctx.stroke(transformed, with: .color(bloomColor.opacity(0.36)), lineWidth: style.strokeWidth + 1.8)
+
             let gradientColors = style.strokeGradientStops.isEmpty
                 ? AgentCursorStyle.defaultGradientStops.map { Color(nsColor: $0.color) }
                 : style.strokeGradientStops.map { Color(nsColor: $0.color) }

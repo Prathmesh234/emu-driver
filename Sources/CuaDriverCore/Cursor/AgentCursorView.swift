@@ -57,7 +57,7 @@ public struct AgentCursorView: View {
 
         let style = renderer.style
         let bloomColor = Color(nsColor: style.bloomColor)
-        let bloomR = max(style.shapeSize * 1.6, 13)
+        let bloomR = max(style.shapeSize * 2.2, 15)
         let bloomRect = CGRect(x: p.x - bloomR, y: p.y - bloomR,
                                width: bloomR * 2, height: bloomR * 2)
 
@@ -87,25 +87,39 @@ public struct AgentCursorView: View {
             imgCtx.draw(Image(nsImage: nsImage),
                         in: CGRect(x: -s / 2, y: -s / 2, width: s, height: s))
         } else {
-            // Procedural arrow mode: 4-vertex pointer shape with gradient fill.
+            // Procedural arrow mode: curved pointer shape with gradient fill.
             let scale = style.shapeSize / 22.0
             let tipX: CGFloat = 14 * scale
-            let tailX: CGFloat = -8 * scale
-            let notchX: CGFloat = -3 * scale
-            let halfHeight: CGFloat = 9 * scale
+            let tailX: CGFloat = -8.5 * scale
+            let notchX: CGFloat = -2.7 * scale
+            let halfHeight: CGFloat = 8.4 * scale
+            let shoulderX: CGFloat = 1.6 * scale
             var shape = Path()
             shape.move(to: CGPoint(x: tipX, y: 0))
-            shape.addLine(to: CGPoint(x: tailX, y: -halfHeight))
-            shape.addLine(to: CGPoint(x: notchX, y: 0))
-            shape.addLine(to: CGPoint(x: tailX, y: halfHeight))
+            shape.addQuadCurve(
+                to: CGPoint(x: tailX, y: -halfHeight),
+                control: CGPoint(x: shoulderX, y: -halfHeight * 0.95)
+            )
+            shape.addQuadCurve(
+                to: CGPoint(x: notchX, y: 0),
+                control: CGPoint(x: tailX + 2.8 * scale, y: -halfHeight * 0.42)
+            )
+            shape.addQuadCurve(
+                to: CGPoint(x: tailX, y: halfHeight),
+                control: CGPoint(x: tailX + 2.8 * scale, y: halfHeight * 0.42)
+            )
+            shape.addQuadCurve(
+                to: CGPoint(x: tipX, y: 0),
+                control: CGPoint(x: shoulderX, y: halfHeight * 0.95)
+            )
             shape.closeSubpath()
 
             let transform = CGAffineTransform(translationX: p.x, y: p.y)
                 .rotated(by: CGFloat(renderer.heading + .pi))
             let transformed = shape.applying(transform)
 
-            ctx.stroke(transformed, with: .color(bloomColor.opacity(0.24)), lineWidth: style.strokeWidth + 3.4)
-            ctx.stroke(transformed, with: .color(bloomColor.opacity(0.36)), lineWidth: style.strokeWidth + 1.8)
+            ctx.stroke(transformed, with: .color(bloomColor.opacity(0.34)), lineWidth: style.strokeWidth + 5.2)
+            ctx.stroke(transformed, with: .color(bloomColor.opacity(0.52)), lineWidth: style.strokeWidth + 2.6)
 
             let gradientColors = style.strokeGradientStops.isEmpty
                 ? AgentCursorStyle.defaultGradientStops.map { Color(nsColor: $0.color) }
@@ -119,6 +133,7 @@ public struct AgentCursorView: View {
                     endPoint: CGPoint(x: p.x + tailX, y: p.y + halfHeight)
                 )
             )
+            ctx.stroke(transformed, with: .color(bloomColor.opacity(0.86)), lineWidth: style.strokeWidth + 0.6)
             ctx.stroke(transformed, with: .color(.white), lineWidth: style.strokeWidth)
         }
     }

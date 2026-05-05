@@ -20,7 +20,7 @@ public enum SetAgentCursorStyleTool {
                   E.g. ["#FF6B6B", "#FF8E53"] for a red-orange arrow.
                  - bloom_color: CSS hex string for the glow halo and the
                    focus-rect highlight drawn around clicked elements.
-                 - shape_size: Drawn cursor size in points (10-40).
+                 - shape_size: Drawn cursor size in points (6-40).
                  - image_path: Absolute or ~-rooted path to a PNG, JPEG,
                    PDF, or SVG file. When set, replaces the default arrow
                   with this image (drawn at shapeSize × shapeSize points,
@@ -50,9 +50,9 @@ public enum SetAgentCursorStyleTool {
                     ],
                     "shape_size": [
                         "type": "number",
-                        "minimum": 10,
+                        "minimum": 6,
                         "maximum": 40,
-                         "description": "Drawn cursor size in points. Default 10.",
+                        "description": "Drawn cursor size in points. Default 8.",
                     ],
                     "image_path": [
                         "type": "string",
@@ -86,7 +86,7 @@ public enum SetAgentCursorStyleTool {
             }
 
             if let shapeSize = number(arguments?["shape_size"]) {
-                styleConfig.shapeSize = min(max(shapeSize, 10), 40)
+                styleConfig.shapeSize = min(max(shapeSize, 6), 40)
             }
 
             if let pathStr = arguments?["image_path"]?.stringValue {

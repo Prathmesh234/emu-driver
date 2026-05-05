@@ -45,10 +45,10 @@ public struct AppStateSnapshot: Sendable, Codable {
     public let screenshotWidth: Int?
     public let screenshotHeight: Int?
     /// Pixels-per-point used when capturing the screenshot. The LLM reads
-    /// pixel coordinates off the image but our click tools take POINTS
-    /// (AX / CGEvent convention), so it needs this factor to convert:
-    /// `point = pixel / scale_factor`. Always present when the screenshot
-    /// fields are present.
+    /// pixel coordinates off the image and passes those image pixels to the
+    /// click tools; the tools perform resize and backing-scale conversion
+    /// internally. This field is metadata for diagnostics, not an instruction
+    /// for clients to manually scale click coordinates.
     public let screenshotScaleFactor: Double?
     /// Original width before maxImageDimension resize. nil = no resize.
     public let screenshotOriginalWidth: Int?

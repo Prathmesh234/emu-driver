@@ -24,6 +24,9 @@ let package = Package(
             dependencies: [
                 "CuaDriverCore",
                 .product(name: "MCP", package: "swift-sdk"),
+            ],
+            exclude: [
+                "Tools/GetWindowStateTool.previous.swift.txt",
             ]
         ),
         .executableTarget(

@@ -456,6 +456,9 @@ public enum ClickTool {
         // Resolve x,y to native window-pixel coordinates.
         var actualX = x
         var actualY = y
+        let context = await ImageResizeRegistry.shared.context(forPid: pid, windowId: windowId)
+        var contextBounds = context?.windowBounds
+        var contextScale = context?.backingScaleFactor
 
         if fromZoom {
             guard let zoom = await ImageResizeRegistry.shared.zoom(forPid: pid) else {
@@ -466,15 +469,23 @@ public enum ClickTool {
             // get full-window native-pixel coordinates.
             actualX = Double(zoom.originX) + x
             actualY = Double(zoom.originY) + y
-        } else if let ratio = await ImageResizeRegistry.shared.ratio(forPid: pid) {
+            contextBounds = zoom.windowBounds
+            contextScale = zoom.backingScaleFactor
+        } else if let imageContext = context {
             // x,y are in the resized image space; scale up to native pixels.
-            actualX = x * ratio
-            actualY = y * ratio
+            actualX = x * imageContext.scaleX
+            actualY = y * imageContext.scaleY
         }
 
         let screenPoint: CGPoint
         do {
-            if let windowId {
+            if let contextBounds, let contextScale {
+                screenPoint = WindowCoordinateSpace.screenPoint(
+                    fromImagePixel: CGPoint(x: actualX, y: actualY),
+                    windowBounds: contextBounds,
+                    scaleFactor: contextScale
+                )
+            } else if let windowId {
                 screenPoint = try WindowCoordinateSpace.screenPoint(
                     fromImagePixel: CGPoint(x: actualX, y: actualY),
                     forPid: pid,

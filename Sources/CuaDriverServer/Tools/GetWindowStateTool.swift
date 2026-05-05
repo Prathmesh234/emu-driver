@@ -227,13 +227,18 @@ public enum GetWindowStateTool {
                             originalWidth: shot.originalWidth,
                             originalHeight: shot.originalHeight
                         )
-                        // Record resize ratio so ClickTool can scale back up.
-                        if let origW = shot.originalWidth, shot.width > 0 {
-                            await ImageResizeRegistry.shared.setRatio(
-                                Double(origW) / Double(shot.width), forPid: pid)
-                        } else {
-                            await ImageResizeRegistry.shared.clearRatio(forPid: pid)
-                        }
+                        let scaleX = shot.originalWidth.map { Double($0) / Double(shot.width) } ?? 1.0
+                        let scaleY = shot.originalHeight.map { Double($0) / Double(shot.height) } ?? 1.0
+                        await ImageResizeRegistry.shared.setContext(
+                            ImageCoordinateContext(
+                                scaleX: scaleX,
+                                scaleY: scaleY,
+                                backingScaleFactor: shot.scaleFactor,
+                                windowBounds: shot.windowBounds
+                            ),
+                            forPid: pid,
+                            windowId: windowId
+                        )
                     } catch CaptureError.windowNotFound {
                         // Window raced — swallow and emit a screenshot-less
                         // response.

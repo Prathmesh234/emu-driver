@@ -25,6 +25,8 @@ public struct Screenshot: Sendable {
     public let originalWidth: Int?
     /// Original height before maxImageDimension resize. nil means no resize.
     public let originalHeight: Int?
+    /// Window frame that produced this image, in screen points.
+    public let windowBounds: WindowBounds?
 }
 
 public enum CaptureError: Error, Sendable, CustomStringConvertible {
@@ -95,7 +97,8 @@ public actor WindowCapture {
             height: cgImage.height,
             scaleFactor: scale,
             originalWidth: nil,
-            originalHeight: nil
+            originalHeight: nil,
+            windowBounds: nil
         )
     }
 
@@ -154,7 +157,13 @@ public actor WindowCapture {
             height: resized.height,
             scaleFactor: Double(scale),
             originalWidth: didResize ? origW : nil,
-            originalHeight: didResize ? origH : nil
+            originalHeight: didResize ? origH : nil,
+            windowBounds: WindowBounds(
+                x: window.frame.origin.x,
+                y: window.frame.origin.y,
+                width: window.frame.width,
+                height: window.frame.height
+            )
         )
     }
 

@@ -52,7 +52,7 @@ public enum SetAgentCursorStyleTool {
                         "type": "number",
                         "minimum": 10,
                         "maximum": 40,
-                        "description": "Drawn cursor size in points. Default 13.",
+                         "description": "Drawn cursor size in points. Default 10.",
                     ],
                     "image_path": [
                         "type": "string",

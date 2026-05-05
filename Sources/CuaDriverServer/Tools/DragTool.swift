@@ -211,6 +211,9 @@ public enum DragTool {
         var actualFromY = fromY
         var actualToX = toX
         var actualToY = toY
+        let context = await ImageResizeRegistry.shared.context(forPid: pid, windowId: windowId)
+        var contextBounds = context?.windowBounds
+        var contextScale = context?.backingScaleFactor
 
         if fromZoom {
             guard let zoom = await ImageResizeRegistry.shared.zoom(forPid: pid) else {
@@ -221,17 +224,30 @@ public enum DragTool {
             actualFromY = Double(zoom.originY) + fromY
             actualToX = Double(zoom.originX) + toX
             actualToY = Double(zoom.originY) + toY
-        } else if let ratio = await ImageResizeRegistry.shared.ratio(forPid: pid) {
-            actualFromX = fromX * ratio
-            actualFromY = fromY * ratio
-            actualToX = toX * ratio
-            actualToY = toY * ratio
+            contextBounds = zoom.windowBounds
+            contextScale = zoom.backingScaleFactor
+        } else if let imageContext = context {
+            actualFromX = fromX * imageContext.scaleX
+            actualFromY = fromY * imageContext.scaleY
+            actualToX = toX * imageContext.scaleX
+            actualToY = toY * imageContext.scaleY
         }
 
         let startScreen: CGPoint
         let endScreen: CGPoint
         do {
-            if let windowId {
+            if let contextBounds, let contextScale {
+                startScreen = WindowCoordinateSpace.screenPoint(
+                    fromImagePixel: CGPoint(x: actualFromX, y: actualFromY),
+                    windowBounds: contextBounds,
+                    scaleFactor: contextScale
+                )
+                endScreen = WindowCoordinateSpace.screenPoint(
+                    fromImagePixel: CGPoint(x: actualToX, y: actualToY),
+                    windowBounds: contextBounds,
+                    scaleFactor: contextScale
+                )
+            } else if let windowId {
                 startScreen = try WindowCoordinateSpace.screenPoint(
                     fromImagePixel: CGPoint(x: actualFromX, y: actualFromY),
                     forPid: pid,

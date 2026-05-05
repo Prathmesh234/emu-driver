@@ -258,14 +258,21 @@ public enum RightClickTool {
         // the same pattern and rationale.
         var actualX = x
         var actualY = y
-        if let ratio = await ImageResizeRegistry.shared.ratio(forPid: pid) {
-            actualX = x * ratio
-            actualY = y * ratio
+        let context = await ImageResizeRegistry.shared.context(forPid: pid, windowId: windowId)
+        if let context {
+            actualX = x * context.scaleX
+            actualY = y * context.scaleY
         }
 
         let screenPoint: CGPoint
         do {
-            if let windowId {
+            if let bounds = context?.windowBounds {
+                screenPoint = WindowCoordinateSpace.screenPoint(
+                    fromImagePixel: CGPoint(x: actualX, y: actualY),
+                    windowBounds: bounds,
+                    scaleFactor: context?.backingScaleFactor ?? 1.0
+                )
+            } else if let windowId {
                 screenPoint = try WindowCoordinateSpace.screenPoint(
                     fromImagePixel: CGPoint(x: actualX, y: actualY),
                     forPid: pid,

@@ -110,12 +110,16 @@ public enum ZoomTool {
                 )
             }
 
-            // Scale coordinates back to original resolution if resized
-            let ratio = await ImageResizeRegistry.shared.ratio(forPid: pid) ?? 1.0
-            let origX1 = Int(x1 * ratio)
-            let origY1 = Int(y1 * ratio)
-            let origX2 = Int(x2 * ratio)
-            let origY2 = Int(y2 * ratio)
+            // Scale coordinates back to original resolution if resized.
+            // Keep x/y ratios separate because max-dimension resizing rounds
+            // each output dimension independently.
+            let context = await ImageResizeRegistry.shared.context(forPid: pid, windowId: nil)
+            let scaleX = context?.scaleX ?? 1.0
+            let scaleY = context?.scaleY ?? 1.0
+            let origX1 = Int(x1 * scaleX)
+            let origY1 = Int(y1 * scaleY)
+            let origX2 = Int(x2 * scaleX)
+            let origY2 = Int(y2 * scaleY)
 
             // Pad by 20% on each side so the target stays visible even
             // if the caller's coordinates are slightly off.
@@ -127,8 +131,17 @@ public enum ZoomTool {
             let paddedY2 = origY2 + padH
 
             // Capture at native resolution (no resize)
-            guard let shot = try? await capture.captureFrontmostWindow(pid: pid)
-            else {
+            let shot: Screenshot?
+            if let windowId = context?.windowId {
+                shot = try? await capture.captureWindow(
+                    windowID: windowId,
+                    format: .jpeg,
+                    quality: 85
+                )
+            } else {
+                shot = try? await capture.captureFrontmostWindow(pid: pid)
+            }
+            guard let shot else {
                 return errorResult("No capturable window for pid \(pid).")
             }
 
@@ -178,7 +191,9 @@ public enum ZoomTool {
             // Store zoom context so click(from_zoom=true) can map automatically.
             await ImageResizeRegistry.shared.setZoom(
                 ZoomContext(originX: cropX, originY: cropY,
-                            width: cropW, height: cropH, ratio: ratio),
+                            width: cropW, height: cropH, ratio: scaleX,
+                            backingScaleFactor: shot.scaleFactor,
+                            windowBounds: shot.windowBounds),
                 forPid: pid)
 
             let summary = "✅ Zoomed region captured at native resolution (\(cropW)x\(cropH) image-coordinate space). "

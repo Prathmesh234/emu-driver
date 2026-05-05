@@ -57,7 +57,7 @@ public struct AgentCursorView: View {
 
         let style = renderer.style
         let bloomColor = Color(nsColor: style.bloomColor)
-        let bloomR = max(style.shapeSize * 0.9, 9)
+        let bloomR = max(style.shapeSize * 1.6, 13)
         let bloomRect = CGRect(x: p.x - bloomR, y: p.y - bloomR,
                                width: bloomR * 2, height: bloomR * 2)
 

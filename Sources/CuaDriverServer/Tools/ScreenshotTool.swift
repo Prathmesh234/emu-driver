@@ -86,7 +86,16 @@ public enum ScreenshotTool {
                 if let ownerPid = WindowEnumerator.allWindows().first(where: {
                     UInt32($0.id) == windowID
                 })?.pid {
-                    await ImageResizeRegistry.shared.clearRatio(forPid: ownerPid)
+                    await ImageResizeRegistry.shared.setContext(
+                        ImageCoordinateContext(
+                            scaleX: 1.0,
+                            scaleY: 1.0,
+                            backingScaleFactor: shot.scaleFactor,
+                            windowBounds: shot.windowBounds
+                        ),
+                        forPid: ownerPid,
+                        windowId: windowID
+                    )
                 }
                 let base64 = shot.imageData.base64EncodedString()
                 let mime = format == .png ? "image/png" : "image/jpeg"

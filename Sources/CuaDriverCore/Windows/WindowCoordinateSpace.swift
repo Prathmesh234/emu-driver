@@ -75,6 +75,22 @@ public enum WindowCoordinateSpace {
         return convert(imagePixel: imagePixel, windowBounds: info.bounds)
     }
 
+    /// Translate a screenshot image-pixel coordinate using the exact window
+    /// frame and scale factor that produced that screenshot. This avoids
+    /// small but visible offsets when ScreenCaptureKit's window frame differs
+    /// from a fresh CGWindowList enumeration.
+    public static func screenPoint(
+        fromImagePixel imagePixel: CGPoint,
+        windowBounds: WindowBounds,
+        scaleFactor: Double
+    ) -> CGPoint {
+        let scale = CGFloat(max(scaleFactor, 0.0001))
+        return CGPoint(
+            x: windowBounds.x + imagePixel.x / scale,
+            y: windowBounds.y + imagePixel.y / scale
+        )
+    }
+
     private static func convert(
         imagePixel: CGPoint, windowBounds: WindowBounds
     ) -> CGPoint {

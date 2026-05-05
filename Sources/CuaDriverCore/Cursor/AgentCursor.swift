@@ -40,7 +40,7 @@ public struct AgentCursorStyle: @unchecked Sendable {
     /// Container layer size (points). Default 44.
     public let containerSize: CGFloat
 
-    /// Drawn size of the cursor shape (points). Default 13.
+    /// Drawn size of the cursor shape (points). Default 10.
     public let shapeSize: CGFloat
 
     /// Axial stroke gradient stops for the procedural arrow. Ignored when
@@ -70,15 +70,15 @@ public struct AgentCursorStyle: @unchecked Sendable {
 
     public init(
         containerSize: CGFloat = 44,
-        shapeSize: CGFloat = 13,
+        shapeSize: CGFloat = 10,
         strokeGradientStops: [AgentCursorGradientStop] = AgentCursorStyle.defaultGradientStops,
         strokeGradientAngleDegrees: CGFloat = 135,
-        strokeWidth: CGFloat = 2.0,
+        strokeWidth: CGFloat = 1.6,
         highlightStrokeWidth: CGFloat = 0.5,
-        bloomColor: NSColor = .white,
-        bloomCenterAlpha: CGFloat = 0.30,
-        bloomMidAlpha: CGFloat = 0.12,
-        bloomBreathPeak: CGFloat = 0.38,
+        bloomColor: NSColor = NSColor(red: 0x2F / 255, green: 0x9B / 255, blue: 0xFF / 255, alpha: 1),
+        bloomCenterAlpha: CGFloat = 0.58,
+        bloomMidAlpha: CGFloat = 0.26,
+        bloomBreathPeak: CGFloat = 0.62,
         image: NSImage? = nil
     ) {
         self.containerSize = containerSize
@@ -94,18 +94,19 @@ public struct AgentCursorStyle: @unchecked Sendable {
         self.image = image
     }
 
-    // emu-cua-driver heritage gradient: ice-blue tip → cyan body → mint tail.
+    // White pointer with a subtle icy tail; the blue identity comes from the
+    // bloom/stroke so the cursor stays visible on both light and dark surfaces.
     public static let defaultGradientStops: [AgentCursorGradientStop] = [
         AgentCursorGradientStop(
-            color: NSColor(red: 0xDB / 255, green: 0xEE / 255, blue: 0xFF / 255, alpha: 1),
+            color: NSColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1),
             location: 0.0
         ),
         AgentCursorGradientStop(
-            color: NSColor(red: 0x5E / 255, green: 0xC0 / 255, blue: 0xE8 / 255, alpha: 1),
+            color: NSColor(red: 0xF9 / 255, green: 0xFC / 255, blue: 0xFF / 255, alpha: 1),
             location: 0.53
         ),
         AgentCursorGradientStop(
-            color: NSColor(red: 0x54 / 255, green: 0xCD / 255, blue: 0xA0 / 255, alpha: 1),
+            color: NSColor(red: 0xE7 / 255, green: 0xF2 / 255, blue: 0xFF / 255, alpha: 1),
             location: 1.0
         ),
     ]

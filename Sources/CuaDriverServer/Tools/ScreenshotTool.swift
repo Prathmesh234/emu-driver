@@ -83,10 +83,16 @@ public enum ScreenshotTool {
                     format: format,
                     quality: quality
                 )
+                if let ownerPid = WindowEnumerator.allWindows().first(where: {
+                    UInt32($0.id) == windowID
+                })?.pid {
+                    await ImageResizeRegistry.shared.clearRatio(forPid: ownerPid)
+                }
                 let base64 = shot.imageData.base64EncodedString()
                 let mime = format == .png ? "image/png" : "image/jpeg"
                 var summaryLines: [String] = [
-                    "✅ Window screenshot — \(shot.width)x\(shot.height) \(format.rawValue) [window_id: \(rawWindowID)]"
+                    "✅ Window screenshot — \(shot.width)x\(shot.height) \(format.rawValue) [window_id: \(rawWindowID)]",
+                    "Pixel x/y must be measured in this exact attached image: 0 <= x < \(shot.width), 0 <= y < \(shot.height).",
                 ]
                 let summary = summaryLines.joined(separator: "\n")
                 return CallTool.Result(

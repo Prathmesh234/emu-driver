@@ -354,7 +354,14 @@ public enum GetWindowStateTool {
 
         case .vision:
             if snapshot.screenshotPngBase64 != nil {
-                lines.append("✅ \(label) — screenshot captured")
+                var headline = "✅ \(label) — screenshot captured"
+                if let w = snapshot.screenshotWidth, let h = snapshot.screenshotHeight {
+                    headline += " (\(w)x\(h) image-coordinate space)"
+                }
+                lines.append(headline)
+                if let w = snapshot.screenshotWidth, let h = snapshot.screenshotHeight {
+                    lines.append("Pixel x/y must be measured in this exact attached image: 0 <= x < \(w), 0 <= y < \(h).")
+                }
                 if let w = snapshot.screenshotWidth, w > 1000 {
                     lines.append(
                         "⚠️  Screenshot is \(w)px wide."
@@ -368,11 +375,21 @@ public enum GetWindowStateTool {
             var headline =
                 "✅ \(label) — \(snapshot.elementCount) elements, turn \(snapshot.turnId)"
             if snapshot.screenshotPngBase64 != nil {
-                headline += " + screenshot"
+                if let w = snapshot.screenshotWidth, let h = snapshot.screenshotHeight {
+                    headline += " + screenshot (\(w)x\(h) image-coordinate space)"
+                } else {
+                    headline += " + screenshot"
+                }
             } else {
                 headline += " (screenshot capture failed)"
             }
             lines.append(headline)
+            if snapshot.screenshotPngBase64 != nil,
+               let w = snapshot.screenshotWidth,
+               let h = snapshot.screenshotHeight
+            {
+                lines.append("Pixel x/y must be measured in this exact attached image: 0 <= x < \(w), 0 <= y < \(h).")
+            }
 
             if snapshot.elementCount <= 15 {
                 lines.append(

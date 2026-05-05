@@ -256,16 +256,23 @@ public enum RightClickTool {
         // `x, y` are window-local screenshot pixels. Convert to screen
         // points before injecting. See ClickTool.performPixelClick for
         // the same pattern and rationale.
+        var actualX = x
+        var actualY = y
+        if let ratio = await ImageResizeRegistry.shared.ratio(forPid: pid) {
+            actualX = x * ratio
+            actualY = y * ratio
+        }
+
         let screenPoint: CGPoint
         do {
             if let windowId {
                 screenPoint = try WindowCoordinateSpace.screenPoint(
-                    fromImagePixel: CGPoint(x: x, y: y),
+                    fromImagePixel: CGPoint(x: actualX, y: actualY),
                     forPid: pid,
                     windowId: windowId)
             } else {
                 screenPoint = try WindowCoordinateSpace.screenPoint(
-                    fromImagePixel: CGPoint(x: x, y: y), forPid: pid)
+                    fromImagePixel: CGPoint(x: actualX, y: actualY), forPid: pid)
             }
         } catch let error as WindowCoordinateSpaceError {
             return errorResult(error.description)

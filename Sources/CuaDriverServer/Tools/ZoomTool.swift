@@ -181,11 +181,11 @@ public enum ZoomTool {
                             width: cropW, height: cropH, ratio: ratio),
                 forPid: pid)
 
-            let summary = "✅ Zoomed region captured at native resolution. "
+            let summary = "✅ Zoomed region captured at native resolution (\(cropW)x\(cropH) image-coordinate space). "
                 + "To click a target in this image, use "
                 + "`click(pid, x, y, from_zoom=true)` where x,y are pixel "
-                + "coordinates in THIS zoomed image — the driver maps them "
-                + "back automatically."
+                + "coordinates in THIS exact zoomed image (0 <= x < \(cropW), "
+                + "0 <= y < \(cropH)) — the driver maps them back automatically."
 
             return try CallTool.Result(
                 content: [

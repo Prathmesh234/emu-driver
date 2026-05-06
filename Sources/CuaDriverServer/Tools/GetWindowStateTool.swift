@@ -1,4 +1,3 @@
-import AppKit
 import CuaDriverCore
 import Foundation
 import MCP
@@ -28,12 +27,10 @@ public enum GetWindowStateTool {
                 enumerate candidates, or read `launch_app`'s `windows` field for
                 freshly-launched apps.
 
-                `window_id` MUST belong to `pid`. When the window is on another
-                Space, the driver deliberately skips the AX walk and returns a
-                vision-only screenshot instead of activating or raising the target.
-                This keeps coworker/background mode from dragging the user back to
-                the target Space; element-indexed actions can resume after a later
-                on-Space AX snapshot refreshes the cache.
+                `window_id` MUST belong to `pid` and MUST be on the user's current
+                Space; the call returns `isError: true` otherwise. The driver does
+                not auto-fall-back to a different window — window selection is the
+                caller's responsibility.
 
                 The screenshot of the specified window is delivered as a native MCP
                 image content block (not a JSON text field), so clients receive it
@@ -90,7 +87,7 @@ public enum GetWindowStateTool {
                     "window_id": [
                         "type": "integer",
                         "description":
-                            "CGWindowID of the target window. Must belong to `pid`. Enumerate via `list_windows` or read from `launch_app`'s `windows` array. Off-Space windows are captured vision-only to avoid switching Spaces.",
+                            "CGWindowID of the target window. Must belong to `pid` and be on the user's current Space. Enumerate via `list_windows` or read from `launch_app`'s `windows` array.",
                     ],
                     "query": [
                         "type": "string",
@@ -158,10 +155,10 @@ public enum GetWindowStateTool {
             // Validate that the window belongs to this pid. The driver
             // never guesses which window to snapshot — the caller names
             // it explicitly — so a mismatched pid/window is a hard error.
-            // Off-Space windows are NOT rejected. They are handled below
-            // by degrading to vision-only capture so this read-only tool
-            // does not activate the target app or pull the user back to
-            // the target Space.
+            // Off-Space windows are NOT rejected: the snapshot still
+            // carries `off_space: true` and the caller decides whether
+            // to proceed (useful for reading menu state on a window the
+            // user has parked elsewhere).
             let allWindows = WindowEnumerator.allWindows()
             guard let window = allWindows.first(where: {
                 UInt32($0.id) == windowId
@@ -185,25 +182,15 @@ public enum GetWindowStateTool {
             let config = await ConfigStore.shared.load()
             let captureMode = config.captureMode
             let maxImageDim = config.maxImageDimension
-            let windowSpaceIDs = SpaceMigrator.spaceIDs(forWindowID: windowId)
-            let currentSpaceID = SpaceMigrator.currentSpaceID()
-            let windowIsOffCurrentSpace: Bool = {
-                guard let windowSpaceIDs, let currentSpaceID else { return false }
-                return !windowSpaceIDs.contains(currentSpaceID)
-            }()
-            let effectiveCaptureMode: CaptureMode = windowIsOffCurrentSpace
-                ? .vision
-                : captureMode
 
-            return await withReadOnlyFocusSuppressed(pid: pid) {
-                do {
+            do {
                 // `.vision` skips the AX walk entirely — no tree
                 // computation, no element_index cache update. The whole
                 // point of that mode is to cut CPU and latency for
                 // vision-only / pixel-click workflows that never consult
                 // the AX tree. `.ax` and `.som` still walk normally.
                 var snapshot: AppStateSnapshot
-                if effectiveCaptureMode == .vision {
+                if captureMode == .vision {
                     snapshot = try await AppStateRegistry.engine.metadataOnly(pid: pid)
                 } else {
                     snapshot = try await AppStateRegistry.engine.snapshot(
@@ -224,7 +211,7 @@ public enum GetWindowStateTool {
                 // race (window closed between validation and capture)
                 // leaves the snapshot without a screenshot; the structured
                 // response's `has_screenshot=false` surfaces the omission.
-                if effectiveCaptureMode != .ax {
+                if captureMode != .ax {
                     do {
                         let shot = try await capture.captureWindow(
                             windowID: windowId,
@@ -259,17 +246,9 @@ public enum GetWindowStateTool {
                 }
 
                 var textContent = buildSummary(
-                    snapshot: snapshot, pid: pid, mode: effectiveCaptureMode
+                    snapshot: snapshot, pid: pid, mode: captureMode
                 )
-                if windowIsOffCurrentSpace {
-                    let requested = captureMode.rawValue
-                    textContent = offSpaceWarning(
-                        requestedMode: requested,
-                        currentSpaceID: currentSpaceID,
-                        windowSpaceIDs: windowSpaceIDs
-                    ) + "\n\n" + textContent
-                }
-                if effectiveCaptureMode != .vision && !snapshot.treeMarkdown.isEmpty {
+                if captureMode != .vision && !snapshot.treeMarkdown.isEmpty {
                     textContent += "\n\n" + snapshot.treeMarkdown
                 }
                 // If the caller passed a javascript snippet, run it in the
@@ -347,60 +326,15 @@ public enum GetWindowStateTool {
                     return result
                 }
                 return CallTool.Result(content: content)
-                } catch let error as AppStateError {
-                    return errorResult(error.description)
-                } catch let error as CaptureError {
-                    return errorResult("Screenshot failed: \(error.description)")
-                } catch {
-                    return errorResult("Unexpected error: \(error)")
-                }
+            } catch let error as AppStateError {
+                return errorResult(error.description)
+            } catch let error as CaptureError {
+                return errorResult("Screenshot failed: \(error.description)")
+            } catch {
+                return errorResult("Unexpected error: \(error)")
             }
         }
     )
-
-    /// Read-only tools should never make the target app/front Space visible.
-    /// Most snapshot work is passive, but Chromium AX activation and AppleScript
-    /// JavaScript reads can trigger app self-activation on some systems. Keep the
-    /// existing system-level suppressor armed around the whole read so any such
-    /// activation is immediately demoted back to the user's current app.
-    private static func withReadOnlyFocusSuppressed(
-        pid: Int32,
-        body: () async -> CallTool.Result
-    ) async -> CallTool.Result {
-        let priorFrontmost = await MainActor.run {
-            NSWorkspace.shared.frontmostApplication
-        }
-        let handle: SuppressionHandle?
-        if let priorFrontmost, priorFrontmost.processIdentifier != pid {
-            handle = await AppStateRegistry.systemFocusStealPreventer
-                .beginSuppression(targetPid: pid, restoreTo: priorFrontmost)
-        } else {
-            handle = nil
-        }
-
-        let result = await body()
-
-        if let handle {
-            try? await Task.sleep(nanoseconds: 50_000_000)
-            await AppStateRegistry.systemFocusStealPreventer.endSuppression(handle)
-        }
-        return result
-    }
-
-    private static func offSpaceWarning(
-        requestedMode: String,
-        currentSpaceID: UInt64?,
-        windowSpaceIDs: [UInt64]?
-    ) -> String {
-        var message = "⚠️  Target window is on another macOS Space; skipped AX snapshot and used vision-only capture to avoid switching the user's Space."
-        if requestedMode != CaptureMode.vision.rawValue {
-            message += " Requested capture_mode=\(requestedMode) was temporarily treated as vision for this call."
-        }
-        if let currentSpaceID, let windowSpaceIDs {
-            message += " current_space_id=\(currentSpaceID), window_space_ids=\(windowSpaceIDs)."
-        }
-        return message
-    }
 
     /// Mode-aware summary block. First line is always a ✅ headline with
     /// only the fields the agent needs. Warnings follow on separate lines.

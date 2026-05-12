@@ -91,11 +91,28 @@ enum CLIDocExtractor {
         CommandDoc(
             name: "mcp",
             abstract: "Run the stdio MCP server.",
-            discussion: nil,
+            discussion: """
+                When invoked from a shell or IDE terminal (Claude Code, Cursor,
+                VS Code, Warp), macOS TCC attributes the process to the parent
+                terminal — not to EmuCuaDriver.app — so AX probes silently fail
+                against the wrong bundle id. To sidestep this without breaking
+                the stdio MCP transport, `mcp` detects the context, ensures a
+                `emu-cua-driver serve` daemon is running under LaunchServices
+                (relaunching via `open -n -g -a EmuCuaDriver --args serve` if not),
+                and proxies every MCP tool call through the daemon's Unix
+                socket. Tool semantics are identical to the in-process path.
+                Pass `--no-daemon-relaunch` (or set CUA_DRIVER_MCP_NO_RELAUNCH=1)
+                to force in-process execution — useful when the calling context
+                already has the right TCC grants (e.g. spawned from EmuCuaDriver.app
+                directly), or for diagnosing in-process failures.
+                """,
             arguments: [],
-            options: [],
+            options: [
+                OptionDoc(name: "socket", shortName: nil, help: "Override the daemon Unix socket path used by the proxy fallback.", type: "String", defaultValue: nil, isOptional: true),
+            ],
             flags: [
                 FlagDoc(name: "claude-code-computer-use-compat", shortName: nil, help: "Expose normal EmuCuaDriver tools, replacing only `screenshot` with a Claude Code-friendly window-only screenshot that establishes the vision coordinate frame.", defaultValue: false),
+                FlagDoc(name: "no-daemon-relaunch", shortName: nil, help: "Stay in the current process instead of auto-launching a daemon and proxying through its Unix socket when invoked from a shell without EmuCuaDriver.app's TCC grants. Also toggleable via CUA_DRIVER_MCP_NO_RELAUNCH=1.", defaultValue: false),
             ],
             subcommands: []
         )

@@ -60,9 +60,16 @@ cd "$CUA_DRIVER_DIR"
 mkdir -p .release
 log "normal" "Ensuring .release directory exists and is accessible"
 
-# Build the release version
-log "essential" "Building release version..."
-swift build -c release --product emu-cua-driver > /dev/null
+# Build or use a prebuilt binary (e.g. a pre-lipo'd universal binary from CI).
+# Set CUA_DRIVER_PREBUILT_BINARY to an absolute path to skip swift build entirely.
+if [ -n "${CUA_DRIVER_PREBUILT_BINARY:-}" ]; then
+    log "essential" "Using prebuilt binary: $CUA_DRIVER_PREBUILT_BINARY"
+    BUILT_BINARY="$CUA_DRIVER_PREBUILT_BINARY"
+else
+    log "essential" "Building release version..."
+    swift build -c release --product emu-cua-driver > /dev/null
+    BUILT_BINARY=".build/release/emu-cua-driver"
+fi
 
 # --- Assemble .app bundle ---
 log "essential" "Assembling .app bundle..."
@@ -73,7 +80,7 @@ mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 # Copy the binary into the bundle
-cp -f .build/release/emu-cua-driver "$APP_BUNDLE/Contents/MacOS/emu-cua-driver"
+cp -f "$BUILT_BINARY" "$APP_BUNDLE/Contents/MacOS/emu-cua-driver"
 
 # Stamp and copy Info.plist — the source plist ships with a static
 # `CFBundleShortVersionString` for dev builds; substitute the release
@@ -83,10 +90,10 @@ sed "s/<string>0.0.1<\/string>/<string>$VERSION<\/string>/" "./App/CuaDriver/Inf
 # Claude Code skill pack. install.sh symlinks ~/.claude/skills/emu-cua-driver
 # into this bundle path when a Claude Code install is detected. Ship
 # the skill inside the .app so it survives auto-updates.
-if [ -d "Skills/cua-driver" ]; then
+if [ -d "Skills/emu-cua-driver" ]; then
     log "essential" "Copying Claude Code skill pack into bundle..."
     mkdir -p "$APP_BUNDLE/Contents/Resources/Skills"
-    cp -R Skills/cua-driver "$APP_BUNDLE/Contents/Resources/Skills/emu-cua-driver"
+    cp -R Skills/emu-cua-driver "$APP_BUNDLE/Contents/Resources/Skills/emu-cua-driver"
 fi
 
 # --- Sign the .app bundle ---

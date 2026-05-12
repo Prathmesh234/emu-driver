@@ -24,6 +24,7 @@ struct CuaDriverCommand: AsyncParsableCommand {
             UpdateCommand.self,
             DiagnoseCommand.self,
             DoctorCommand.self,
+            CleanupCommand.self,
             DumpDocsCommand.self,
         ]
     )
@@ -376,7 +377,7 @@ struct MCPCommand: ParsableCommand {
         help: """
             Stay in the current process instead of auto-launching a daemon \
             and proxying through its Unix socket when invoked from a shell \
-            without CuaDriver.app's TCC grants. Also toggleable via \
+            without EmuCuaDriver.app's TCC grants. Also toggleable via \
             CUA_DRIVER_MCP_NO_RELAUNCH=1.
             """
     )
@@ -684,7 +685,7 @@ struct UpdateCommand: AsyncParsableCommand {
     }
 }
 
-/// `emu-cua-driver doctor` — clean up stale install bits left from older versions.
+/// `emu-cua-driver cleanup` — clean up stale install bits left from older versions.
 ///
 /// v0.0.5 and earlier installed a weekly LaunchAgent at
 /// `~/Library/LaunchAgents/com.emu.cuadriver.updater.plist` and a companion
@@ -696,9 +697,9 @@ struct UpdateCommand: AsyncParsableCommand {
 /// update script. The plist lives under `$HOME` (no sudo). The companion
 /// script under `/usr/local/bin` is root-owned, so we print the exact
 /// `sudo rm` command for the user to run if it still exists.
-struct DoctorCommand: ParsableCommand {
+struct CleanupCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "doctor",
+        commandName: "cleanup",
         abstract: "Clean up stale install bits left from older emu-cua-driver versions."
     )
 

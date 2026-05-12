@@ -389,6 +389,43 @@ rg 'CuaDriver\.app|/Applications/CuaDriver|Contents/MacOS/cua-driver|--product c
 
 ---
 
+### 5. Upstream Sync to v0.1.6
+**File(s):** Many — full driver tree
+**Status:** SYNCED FROM UPSTREAM
+**Priority:** N/A (sync record)
+**Rationale:** Periodic catch-up with `trycua/cua` `libs/cua-driver/` subtree. Pulled 8 substantive commits and the corresponding version bumps so the fork now tracks upstream `v0.1.6` while keeping Emu branding, the Emu-only `TypeTextCharsTool`, and the `UPSTREAM_CHANGES.md` playbook.
+
+**How this sync was performed:** Histories between fork and upstream are disjoint (the fork was bootstrapped from a `libs/cua-driver/` subtree split that flattened paths to repo root, so `git merge-base` returns empty). Plain `git pull upstream main` would re-introduce all of `libs/`. Instead, each commit was applied via `git format-patch <sha> -1 --stdout | sed 's@libs/cua-driver/@@g' | git am --3way`, preserving upstream authorship/messages. The fork main branch was pushed after every applied commit so each step is independently reviewable.
+
+**Commits applied (in order, 1–13):**
+
+| Ord | Upstream SHA | Fork SHA | Type | Summary |
+| --- | --- | --- | --- | --- |
+| 1 | `4ee4fa61` | `736a2ee5` | NO-OP | #1418 doc gen — already present via fork commit `659c0d97` ("cursor changes" silently imported upstream content) |
+| 2 | `ff0a6478` | `5085610c` | NO-OP | #1422 Chrome PID-with-trailing-text fix — byte-identical to upstream-after-#1422 |
+| 3 | `dbec648f` | `375bcb35` | NO-OP | v0.1.1 version bump — fork already at v0.1.2 |
+| 4 | `e69d1cbc` | `e7a403ac` | NO-OP | #1424 Claude Code compat — already present; only ad-hoc fix was de-duplicating an `install.sh` help block |
+| 5 | `91724df9` | `d7e0b538` | NO-OP | v0.1.2 version bump — fork already at v0.1.2 |
+| 6 | `8a551a8f` | `cd1427a4` | APPLY  | #1437 NSMenu key equivalents + overlay z-order + focus-steal fixes. Clean cherry-pick, +1032/-68 |
+| 7 | `b329c315` | `765d578f` | APPLY  | v0.1.3 bump; `.bumpversion.cfg` Emu `tag_name`/`message` lines preserved |
+| 8 | `ab409de7` | `ca50cc9b` | APPLY  | #1438 v2 test harness (`Tests/integration/harness/`, conftest, new fixtures). Removed three stale Emu copies of tests upstream had since rewritten (`test_pixel_click_delivery.py`, `test_double_click_delivery.py`, `test_blender_background.py`). One real conflict in `Tests/integration/driver_client.py` (upstream introduced multi-path binary resolution `.app` → release → debug) — adopted upstream structure, rebranded all paths to `EmuCuaDriver.app` / `emu-cua-driver` |
+| 9 | `d422294b` | `fffed629` | APPLY  | v0.1.4 bump |
+| 10 | `5b3915f2` | `664c0ff8` | APPLY  | #1452 surface system overlay windows in `list_windows` / `get_window_state`. Clean cherry-pick, +14/-3 |
+| 11 | `534304f5` | `ef1e7198` | APPLY  | v0.1.5 bump |
+| 12 | `3c069f16` | `0fe33113` | APPLY  | #1477 background-click side-effects detector. Adds `WindowChangeDetector`, wires it into `ClickTool` AX + pixel paths, extends `SystemFocusStealPreventer` wildcard activation handling, adds `test_click_opens_new_window.py`. Clean cherry-pick despite `ClickTool.swift` size, +524/-4 |
+| 13 | `31bc4f86` | `81256c3c` | APPLY  | v0.1.6 bump |
+
+**Notes / follow-ups:**
+- Three test files previously listed as "fork-only" in pre-sync inventory (`test_pixel_click_delivery.py`, `test_double_click_delivery.py`, `test_blender_background.py`) were identified as stale byte-identical copies of upstream's pre-#1438 versions, not Emu-authored. They were removed by the #1438 cherry-pick.
+- New harness files imported in #1438 (`Tests/integration/conftest.py`, `Tests/integration/harness/monitor.py`) and the #1477 test (`Tests/integration/test_click_opens_new_window.py`) still mention `cua-driver` in docstrings and a substring window-name check (`"cua-driver" in str(name).lower()` — functional because `"cua-driver"` is a substring of `"emu-cua-driver"`). These are cosmetic and tracked separately for a follow-up cleanup pass.
+- The `FocusMonitorApp` test sentinel still uses bundle id `com.trycua.FocusMonitorApp` (pre-existing fork state — every older fork test references the same value). Test-helper rebranding is out of scope for this sync.
+- Post-sync smoke checks all green: `swift build -c debug --product emu-cua-driver` succeeds, `--version` reports `0.1.6`, `list-tools` still wires `type_text_chars` (Emu-only), `scripts/build-app.sh debug` produces `EmuCuaDriver.app` with `CFBundleIdentifier = com.emu.cuadriver`, and the audit grep from the section above finds zero leaks to upstream `cua-driver` / `CuaDriver.app` / `com.trycua.driver` runtime surfaces.
+
+**Upstream Equivalent:**
+- Upstream tip at sync time: `trycua/cua` `main` @ `31bc4f86` (v0.1.6).
+
+---
+
 ## Merge Conflict Patterns
 
 ### Pattern 1: Permission Strings

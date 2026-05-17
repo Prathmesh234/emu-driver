@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "CuaDriver",
+    name: "EmuCuaDriver",
     platforms: [
         .macOS(.v14)
     ],
@@ -40,6 +40,10 @@ let package = Package(
         ),
         .testTarget(
             name: "ZoomMathTests",
+            dependencies: ["CuaDriverCore"]
+        ),
+        .testTarget(
+            name: "FocusStealPreventerTests",
             dependencies: ["CuaDriverCore"]
         ),
     ]

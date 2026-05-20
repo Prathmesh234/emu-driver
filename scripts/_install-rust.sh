@@ -17,11 +17,11 @@
 # pick up the Swift binary.
 #
 # Canonical user-facing invocation (forwards here on Linux / --backend=rust):
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/install.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)"
 #
 # Legacy URL (backward-compat shim at libs/emu-cua-driver-rs/scripts/install.sh
 # redirects here):
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver-rs/scripts/install.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver-rs/scripts/install.sh)"
 #
 # Flags:
 #   --bin-dir <path>     install the visible binary/symlink to <path>
@@ -361,7 +361,7 @@ case "$OS-$ARCH_RAW" in
     *)
         err "unsupported platform: $OS / $ARCH_RAW"
         err "  emu-cua-driver-rs ships prebuilts for: darwin-arm64, darwin-x86_64, linux-x86_64."
-        err "  Windows users: install via install.ps1 (irm https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver-rs/scripts/install.ps1 | iex)."
+        err "  Windows users: install via install.ps1 (irm https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver-rs/scripts/install.ps1 | iex)."
         exit 1
         ;;
 esac
@@ -675,10 +675,10 @@ echo "  $BIN_LINK skills install    # fetch + link the emu-cua-driver-rs skill p
 echo "                              # into Claude Code / Codex / OpenClaw / OpenCode."
 echo "                              # The install never touches your agent dirs."
 echo ""
-echo "Docs: https://github.com/trycua/cua/tree/main/libs/emu-cua-driver-rs"
+echo "Docs: https://github.com/trycua/cua/tree/main/libs/cua-driver-rs"
 echo ""
 echo "⚠️  BETA: emu-cua-driver-rs is a cross-platform Rust port of the Swift"
 echo "    emu-cua-driver. Windows and Linux support is feature-complete; macOS"
 echo "    parity with the Swift binary is in progress. For production macOS"
 echo "    use, prefer the original install:"
-echo "      /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/install.sh)\""
+echo "      /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)\""

@@ -43,7 +43,7 @@ NO_MODIFY_PATH="${CUA_DRIVER_NO_MODIFY_PATH:-0}"
 # `--experimental-rust` below either execs the on-disk helper (dev /
 # checked-out-tree case) or curls this URL and pipes it to bash
 # (`curl ... | bash` install case).
-RUST_INSTALLER_URL="https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/_install-rust.sh"
+RUST_INSTALLER_URL="https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/_install-rust.sh"
 
 # Lightweight flag parsing (avoid getopt; macOS getopt is GNU-incompatible).
 #

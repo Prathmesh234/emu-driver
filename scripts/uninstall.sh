@@ -26,10 +26,10 @@
 #   --backend=swift      explicit no-op default (Swift uninstall).
 #
 # Usage:
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/uninstall.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/uninstall.sh)"
 #
 #   # emu-cua-driver-rs (Rust port) — explicit opt-in on macOS:
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/uninstall.sh)" -- --experimental-rust
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/uninstall.sh)" -- --experimental-rust
 #
 #   # Linux auto-detects and removes the Rust port without any flag.
 set -euo pipefail
@@ -40,7 +40,7 @@ set -euo pipefail
 # `--experimental-rust` below either execs the on-disk helper (dev /
 # checked-out-tree case) or curls this URL and pipes it to bash
 # (`curl ... | bash` uninstall case). Mirrors install.sh's pattern.
-RUST_UNINSTALLER_URL="https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/_uninstall-rust.sh"
+RUST_UNINSTALLER_URL="https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/_uninstall-rust.sh"
 
 # Lightweight flag parsing — same two-pass shape as install.sh so the
 # argv shapes stay bit-compatible across install/uninstall and a future

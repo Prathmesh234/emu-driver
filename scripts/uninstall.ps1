@@ -6,11 +6,11 @@
 # config directories.
 #
 # Usage (one-liner — recommended):
-#   irm https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/uninstall.ps1 | iex
+#   irm https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/uninstall.ps1 | iex
 #
 # Force (no prompts):
 #   $forceArgs = @('-Force')
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/trycua/cua/main/libs/emu-cua-driver/scripts/uninstall.ps1))) @forceArgs
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/uninstall.ps1))) @forceArgs
 #
 # What gets removed:
 #   - Scheduled Task 'emu-cua-driver-serve' (autostart entry registered by

@@ -426,6 +426,57 @@ rg 'CuaDriver\.app|/Applications/CuaDriver|Contents/MacOS/cua-driver|--product c
 
 ---
 
+### Sync #2 — v0.1.6 → v0.2.7 (24 commits)
+
+**File(s):** Repository-wide; affects `Sources/CuaDriverCLI/{CuaDriverCommand,ServeCommand,CleanupCommand,DiagnoseCommand}.swift`, `Sources/CuaDriverCLI/Docs/CLIDocExtractor.swift`, `Sources/CuaDriverServer/CuaDriverMCPServer.swift`, `scripts/install.sh`, `scripts/install.ps1`, `scripts/uninstall.sh`, `scripts/build/build-release-notarized.sh`, plus the new files `Sources/CuaDriverCLI/BundleHelpers.swift`, `Sources/CuaDriverCLI/DoctorCommand.swift`, `scripts/_install-rust.sh`, `scripts/_uninstall-rust.sh`.
+**Status:** SYNCED FROM UPSTREAM
+**Priority:** N/A (sync record)
+**Rationale:** Catch-up with `trycua/cua` `libs/cua-driver/` from upstream `v0.1.6` (commit `31bc4f86`) through `v0.2.7` (commit `f8d27d61`). Brings in the SCK macOS 26.4 recovery, MCP→daemon auto-delegation for correct TCC context, a new `doctor` diagnostics command, the `--experimental-rust` opt-in flag (Windows/Linux backend via the Rust port), the focus-handle leak fix, Phase 1+2 install/uninstall script convergence, and assorted bug fixes (#1480 etc., bundle-id app-name resolution, install.ps1 auto-PATH). Emu branding (binary `emu-cua-driver`, bundle `EmuCuaDriver.app`, id `com.emu.cuadriver`, paths under `~/Library/Caches/emu-cua-driver/`, `/Applications/EmuCuaDriver.app`) and the cursor customizations (`AgentCursor.swift`, `AgentCursorView.swift`, `AgentCursorOverlayWindow.swift` — shape, color, glow) are preserved end-to-end. Swift target/module names (`CuaDriverCore`, `CuaDriverServer`, `CuaDriverCLI`) are intentionally left on the upstream identifiers to minimize merge conflicts on future syncs.
+
+**How this sync was performed:** Same disjoint-history pattern as Sync #1. Each commit applied via `git format-patch <sha> -1 --stdout -- libs/cua-driver/ | git am -p3 --3way` (the `-p3` strips the `a/libs/cua-driver/` prefix; `--3way` uses blob IDs from the patch when context lines don't match). After each application, a sentinel-shielded perl rebrand pass (`rebrand.sh`) substituted any newly-added upstream strings — `cua-driver→emu-cua-driver`, `CuaDriver.app→EmuCuaDriver.app`, `com.trycua.{driver,cuadriver}→com.emu.cuadriver`, `Application Support/Cua Driver→Application Support/EmuCuaDriver` — without double-prefixing existing Emu strings (sentinels `\x00ESCD\x00` etc. shield them before substitution). The pass deliberately matches strings only with suffixes (`.app`, `"`, `-`) or word boundaries that don't catch Swift module/type identifiers. After every cherry-pick the commit was amended with the rebrand result so each fork commit is independently reviewable.
+
+**Commits applied (in order, 1–24):**
+
+| Ord | Upstream SHA | Fork SHA | Type | Summary |
+| --- | --- | --- | --- | --- |
+| 1  | `e8e62910` | `b7872d0a` | APPLY  | #1478 SCK streaming-start failure recovery for macOS 26.4 |
+| 2  | `41c6afdf` | `74eb5456` | APPLY+ | #1479 auto-delegate `mcp` to daemon for correct TCC context. Heavy branding rework in `ServeCommand.swift`, `CLIDocExtractor.swift`, `CuaDriverCommand.swift`, `CuaDriverMCPServer.swift`. Introduces new file `Sources/CuaDriverCLI/BundleHelpers.swift` (`isExecutableInsideCuaDriverApp()` rebranded to check `/EmuCuaDriver.app/Contents/MacOS/`) |
+| 3  | `91c14b13` | `19fae82d` | APPLY+ | #1490 fixes for #1480 #1482-#1486 #1489. Conflict on CleanupCommand: fork had previously renamed it to commandName "doctor"; upstream introduced a separate new `DoctorCommand.swift` for real diagnostics. Resolution: reverted CleanupCommand → commandName "cleanup" and accepted upstream's new `DoctorCommand.swift` verbatim (one rebranded doc-comment) |
+| 4  | `81baebe8` | `1757a72e` | APPLY  | v0.1.7 bump |
+| 5  | `b9907ec6` | `73105987` | APPLY  | v0.1.8 bump |
+| 6  | `a68f8155` | `16926b90` | APPLY+ | #1494 `CUA_DRIVER_PREBUILT_BINARY` for notarization. Conflict in `scripts/build/build-release-notarized.sh` (kept Emu `BINARY_NAME=emu-cua-driver` + `APP_BUNDLE=EmuCuaDriver.app` while taking the new prebuilt-binary feature) |
+| 7  | `041916da` | `ccea16ee` | APPLY  | v0.1.9 bump |
+| 8  | `bb680218` | `104dc13b` | APPLY  | #1511 Windows + Linux support via `cua-driver-rs` (Rust port). For our fork only the `install.sh` delta inside `libs/cua-driver/` applied — the Rust port itself is not vendored. Adds the `--experimental-rust` delegation path (dead code in our fork) |
+| 9  | `200b36ab` | `104fea25` | APPLY  | #1517 bake version into `install.sh` after each release (CI workflow) |
+| 10 | `3b5c372d` | `864b1b57` | APPLY  | #1492 fix #1481 app-name resolution — bundle id + locale fallbacks |
+| 11 | `453cf203` | `9cd3fda6` | APPLY  | #1538 `--experimental-rust` flag plumbed all the way through `install.sh` |
+| 12 | `ae8fe9ad` | `d85f9c0d` | APPLY  | #1521 kill focus-handle leak class via 4-layer scope binding. Clean cherry-pick despite touching 6 files |
+| 13 | `d3f3b932` | `079bdb52` | APPLY  | v0.2.0 bump (`.bumpversion.cfg` 3-way merge — Emu `tag_name`/`message` preserved) |
+| 14 | `d7e89b3f` | `8b0ef166` | APPLY  | bake 0.2.0 into `install.sh` |
+| 15 | `fe8a570f` | `7e8e3116` | APPLY+ | #1556 install converge to one canonical `.sh`+`.ps1` entry point per platform. One conflict (header comment about Rust delegation target) resolved by accepting upstream + rebrand |
+| 16 | `7f46cdca` | `101fcc62` | APPLY+ | #1557 install Phase 2 — single canonical `install.sh`, Rust logic colocated as the private helper `scripts/_install-rust.sh`. Five conflicts resolved by accepting upstream side (the Phase-2 colocated layout) and letting the rebrand pass restore Emu paths |
+| 17 | `49c8e2da` | `8bf607d1` | APPLY+ | #1559 upstream renames its Rust port's bundle to `com.trycua.cuadriver` + `/Applications/CuaDriver.app` (in-place Swift takeover semantics). For our fork this is dead code (Rust port not vendored) — accepted upstream side everywhere; rebrand pass produced `com.emu.cuadriver` + `EmuCuaDriver.app` consistently |
+| 18 | `571c3ac1` | `c948ff3e` | APPLY+ | #1558 uninstall mirror-convergence — single canonical `uninstall.{sh,ps1}` with `_uninstall-rust.sh` helper. Two conflicts resolved by accepting upstream + manual fixup of `Application Support/Cua Driver` → `Application Support/EmuCuaDriver` (the literal-space variant that the rebrand regex initially didn't match — rebrand.sh subsequently extended to cover it) |
+| 19 | `96b27596` | `a7ec1d08` | APPLY  | bake 0.2.4 into `_install-rust.sh` + `install.ps1` |
+| 20 | `62655a13` | `4c28fd0e` | APPLY+ | #1566 Rust port Phase 2 panel + structural fixes. Only `_install-rust.sh` lands in our fork (one comment-only conflict on bundle-stub path, accepted upstream) |
+| 21 | `764bb192` | `abfb5261` | APPLY  | bake 0.2.5 |
+| 22 | `0f834c61` | `c76b4b0e` | APPLY  | bake 0.2.6 |
+| 23 | `1f9a6a95` | `32d89f21` | APPLY+ | #1576 `install.ps1` auto-add bin dir to User PATH. Two interleaved conflicts (new `Add-UserPathEntry` function + restructured `if ($onPath) ... elseif ($NoPathUpdate) ...` block) resolved by accepting upstream + rebrand |
+| 24 | `f8d27d61` | `79713319` | APPLY  | bake 0.2.7 |
+
+**Notes / follow-ups:**
+- The three customized cursor files (`Sources/CuaDriverServer/AgentCursor/AgentCursor.swift`, `AgentCursorView.swift`, `AgentCursorOverlayWindow.swift`) were not in the upstream change set for v0.1.6→v0.2.7, so they passed through every cherry-pick untouched — shape, color, glow preserved.
+- `.bumpversion.cfg` is at `0.2.0` (the last upstream `bumpversion` commit in this window). The 0.2.4/0.2.5/0.2.6/0.2.7 picks were "bake version sentinel into install scripts" commits and only updated the Rust-port baked-version sentinels (`CUA_DRIVER_RS_BAKED_VERSION` in `_install-rust.sh`, `$Script:CuaDriverRsBakedVersion` in `install.ps1`). Swift `install.sh`'s `CUA_DRIVER_BAKED_VERSION` stays at `"0.2.0"` — same as upstream.
+- The Rust-port install code path (`_install-rust.sh`, `_uninstall-rust.sh`, the `--experimental-rust` flag in `install.sh`/`install.ps1`) is dead code in our fork (we don't vendor `cua-driver-rs`). It's left in place and rebranded for parity with upstream's argv shape, so future Emu-internal Rust experiments can drop a real `emu-cua-driver-rs/` next to the fork without re-deriving the installer plumbing.
+- Pre-sync pre-existing branding leaks (not introduced by this sync, left for later): `Sources/CuaDriverCore/Permissions/PermissionsGate.swift:301` literal `Text("All set. CuaDriver is ready to use.")`, and `Sources/CuaDriverServer/ClaudeCodeComputerUseCompatTools.swift:37` literal `"CuaDriver remains window-scoped..."`.
+- Swift target/module/type names (`CuaDriverCore`, `CuaDriverServer`, `CuaDriverCLI`, `CuaDriverCommand`, `CuaDriverMCPServer`) intentionally stay on upstream identifiers per the established min-conflict invariant. The `rebrand.sh` regex only matches strings carrying suffixes (`.app`, `"`, `-`) or word boundaries that don't catch Swift identifiers.
+
+**Upstream Equivalent:**
+- Upstream tip at sync time: `trycua/cua` `main` @ `f8d27d61` (v0.2.7).
+
+---
+
+
 ## Merge Conflict Patterns
 
 ### Pattern 1: Permission Strings

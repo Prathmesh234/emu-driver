@@ -476,6 +476,32 @@ rg 'CuaDriver\.app|/Applications/CuaDriver|Contents/MacOS/cua-driver|--product c
 
 ---
 
+### Sync #3 — v0.2.7 → upstream `02fdd98a` (1 substantive Swift commit)
+
+**File(s):** `Sources/CuaDriverCore/Input/SkyLightEventPost.swift`
+**Status:** SYNCED FROM UPSTREAM
+**Priority:** N/A (sync record)
+**Rationale:** Catch-up scan of `trycua/cua` `main` from `f8d27d61` (v0.2.7) through `02fdd98a`. In this window ~121 commits touched `libs/cua-driver/`, but for the surface our fork actually vendors (the Swift driver) there was exactly **one** substantive change worth pulling: the macOS 14 (Sonoma) SkyLight crash guard. Everything else was the `cua-driver-rs` (Rust port) and its version-bake/`install` plumbing — dead code in this fork (we do not vendor the Rust port) — plus the #1674 directory reorg, which we deliberately did **not** adopt (see note below).
+
+**How this sync was performed:** Same disjoint-history pattern as Syncs #1–#2. Upstream restructured the tree in #1674 (`53e6736f`), moving the Swift driver from `libs/cua-driver/` to `libs/cua-driver/swift/`. The one Swift fix was therefore applied with `git format-patch <sha> -1 --stdout -- libs/cua-driver/swift/ | git am -p4 --3way` (`-p4` strips the new `a/libs/cua-driver/swift/` prefix; previous syncs used `-p3` against the pre-reorg layout). The patch touched no branding or cursor strings, so no rebrand pass was required. Authorship/message preserved.
+
+**Commits applied:**
+
+| Ord | Upstream SHA | Fork SHA | Type | Summary |
+| --- | --- | --- | --- | --- |
+| 1 | `6c31427c` | `fff915f6` | APPLY | #1782 guard `SLSEventAuthenticationMessage messageWithEventRecord:pid:version:` with `messageClass.responds(to:)`. The factory selector only exists on macOS 15 (Sequoia); on macOS 14 `NSSelectorFromString` still interns it, so `objc_msgSend` dispatched an unimplemented selector and aborted the daemon on `hotkey`/`press_key`/`scroll`. Returns `nil` to skip the auth envelope and fall through to plain `SLEventPostToPid`. Clean cherry-pick, +11/-2 |
+
+**Notes / follow-ups:**
+- **#1674 directory reorg deliberately NOT adopted.** Upstream collapsed `libs/cua-driver-rs/` and `libs/cua-driver/` into `libs/cua-driver/{rust,swift}/`. This fork is intentionally flattened to repo root; adopting the `swift/` nesting would break `Package.swift`, the `scripts/build-app.sh` output path, and the parent repo's `package.json` `extraResources` pointer (`frontend/coworker-mode/emu-driver/.build/release/emu-cua-driver`) for no runtime benefit. Future Swift-touching upstream patches must be applied with `-p4` (strip `libs/cua-driver/swift/`) instead of the old `-p3`.
+- The cursor customization files (`Sources/CuaDriverCore/Cursor/AgentCursor.swift`, `AgentCursorView.swift`, `AgentCursorOverlayWindow.swift`, `AgentCursorRenderer.swift`) were not in this change set — shape, color, glow preserved untouched.
+- Emu branding (`emu-cua-driver`, `EmuCuaDriver.app`, `com.emu.cuadriver`, daemon paths) and the Emu-only `TypeTextCharsTool` are untouched by this sync.
+- **Build smoke checks were NOT run for this sync** — it was performed in a Linux environment without a Swift/macOS toolchain. The branding/`swift build`/`build-app.sh`/plist-identity smoke checks in the "Re-run branding smoke checks" section above must be run on macOS before release.
+
+**Upstream Equivalent:**
+- Upstream tip at sync time: `trycua/cua` `main` @ `02fdd98a`.
+
+---
+
 
 ## Merge Conflict Patterns
 
